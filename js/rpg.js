@@ -226,7 +226,7 @@
       if (!el) { tt.style.display = 'none'; return; }
       if (sel) {
         const [ck, sid] = sel.dataset.spell.split(':'); const sp = CLASSES[ck].spells.find((x) => x.id === sid);
-        tt.innerHTML = spellTip(sp, ck === S.cls ? lvl() : 99);
+        tt.innerHTML = spellTip(sp, ck === S.cls ? lvl() : -1);
       } else {
         const it = findItem(+el.dataset.item); if (!it) return;
         tt.innerHTML = tooltip(it, el.dataset.hint ? `<div class="tt-hint">${el.dataset.hint}</div>` : '');
