@@ -62,3 +62,15 @@
 .abil small { color: #8a8580; font-size: 11px; }
 @media (max-width: 640px) { .arena { grid-template-columns: 100px 1fr 120px; padding: 0 8px; } .hero { width: 95px; height: 130px; } }
 .boss-run .boss-top { grid-template-columns: 1fr auto; }
+
+/* képesség-leírások */
+.cls-card li { display: block; }
+.cls-card li p { margin: 2px 0 0 26px; font-size: 12.5px; color: #8f8778; text-align: left; }
+.abil-row { display: grid !important; grid-template-columns: 34px 1fr auto; gap: 10px; align-items: start; cursor: default; }
+.abil-ic { font-size: 20px; width: 34px; height: 34px; display: grid; place-items: center; border-radius: 8px; background: rgba(0, 0, 0, .45); border: 1px solid #000; }
+.abil-txt b { color: #ffe2a8 !important; font-size: 14px; }
+.abil-txt em { display: block; font-style: normal; font-size: 12.5px; color: #a99f8f; margin-top: 2px; }
+.abil-lv { white-space: nowrap; }
+.passive-chip, .next-sp { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 99px; font-size: 12px; font-weight: 600; align-self: center; cursor: default; }
+.passive-chip { background: rgba(30, 255, 0, .08); border: 1px solid rgba(30, 255, 0, .3); color: #b6ffa8; }
+.next-sp { background: rgba(255, 255, 255, .05); border: 1px dashed #5a4e3e; color: #a99f8f; }

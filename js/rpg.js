@@ -137,6 +137,12 @@
       ]
     }
   };
+  /* WoW-stílusú képesség-tooltip */
+  const spellTip = (sp, lvNow) => `<div class="tt-name" style="color:#ffd100">${sp.ic} ${sp.n}</div>
+    <div class="tt-row"><span>${sp.type === 'active' ? 'Aktív képesség' : 'Passzív képesség'}</span><span>${sp.type === 'active' ? 'Újratöltés: ' + sp.cd + ' kérdés' : ''}</span></div>
+    <div class="tt-stat" style="color:#fff">${sp.d}</div>
+    <div class="tt-ilvl" style="color:${lvNow >= sp.lv ? '#1eff00' : '#ff4040'}">${lvNow >= sp.lv ? '✔ Elérhető' : 'Szükséges szint: ' + sp.lv}</div>
+    ${sp.type === 'active' ? '<div class="tt-hint">Harc közben: Q / W / E gomb, vagy kattints az ikonra.</div>' : '<div class="tt-hint">Mindig hat, nem kell aktiválni.</div>'}`;
   /* Pálcikaember: harcos karddal, mágus poroltóval. */
   function stickman(cls) {
     const warrior = cls === 'warrior';
@@ -215,10 +221,16 @@
     /* tooltip */
     const tt = $('[data-tt]', view);
     view.addEventListener('mousemove', (e) => {
-      const el = e.target.closest('[data-item]');
+      const sel = e.target.closest('[data-spell]');
+      const el = sel || e.target.closest('[data-item]');
       if (!el) { tt.style.display = 'none'; return; }
-      const it = findItem(+el.dataset.item); if (!it) return;
-      tt.innerHTML = tooltip(it, el.dataset.hint ? `<div class="tt-hint">${el.dataset.hint}</div>` : '');
+      if (sel) {
+        const [ck, sid] = sel.dataset.spell.split(':'); const sp = CLASSES[ck].spells.find((x) => x.id === sid);
+        tt.innerHTML = spellTip(sp, ck === S.cls ? lvl() : 99);
+      } else {
+        const it = findItem(+el.dataset.item); if (!it) return;
+        tt.innerHTML = tooltip(it, el.dataset.hint ? `<div class="tt-hint">${el.dataset.hint}</div>` : '');
+      }
       tt.style.display = 'block';
       const x = Math.min(e.clientX + 18, innerWidth - tt.offsetWidth - 10), y = Math.min(e.clientY + 18, innerHeight - tt.offsetHeight - 10);
       tt.style.left = x + 'px'; tt.style.top = y + 'px';
@@ -230,7 +242,7 @@
       body.innerHTML = `<div class="cls-pick"><h2>Válassz kasztot</h2><p class="muted">Később az Armoryban válthatsz. A képességek szintenként nyílnak.</p>
         <div class="cls-grid">${Object.keys(CLASSES).map((k) => { const c = CLASSES[k]; return `<button class="cls-card ${k}" data-cls="${k}">
           <div class="hero ${k} idle">${stickman(k)}</div><h3>${c.e} ${c.n}</h3><p>${c.desc}</p>
-          <ul>${c.spells.map((sp) => `<li><span>${sp.ic}</span><b>${sp.lv}. szint</b> ${sp.n} <small>(${sp.type === 'active' ? 'aktív' : 'passzív'})</small></li>`).join('')}</ul>
+          <ul>${c.spells.map((sp) => `<li data-spell="${k}:${sp.id}"><div><span>${sp.ic}</span><b>${sp.lv}. szint</b> ${sp.n} <small>(${sp.type === 'active' ? 'aktív' : 'passzív'})</small></div><p>${sp.d}</p></li>`).join('')}</ul>
           <span class="btn btn-fire">Ezt választom</span></button>`; }).join('')}</div></div>`;
       $$('[data-cls]', body).forEach((b) => b.onclick = () => { S.cls = b.dataset.cls; persist(); TM.toast(`${CLASSES[S.cls].e} ${CLASSES[S.cls].n} lettél!`); show('map'); });
     }
@@ -376,8 +388,11 @@
       const fx = (el, cls) => { if (!el) return; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); };
       const spellsUI = () => {
         const act = activeSpells();
-        $('[data-spells]', body).innerHTML = act.length ? act.map((sp, i) => `<button class="spell ${cd[sp.id] ? 'cd' : ''}" data-sp="${sp.id}" title="${esc(sp.d)}"><span class="sp-ic">${sp.ic}</span><span><b>${sp.n}</b><small>${cd[sp.id] ? cd[sp.id] + ' kérdés múlva' : 'KÉSZ · ' + KEYS[i].toUpperCase() + ' gomb'}</small></span></button>`).join('')
-          : `<p class="muted" style="margin:0">Az első aktív képesség a 3. szinten nyílik (${C.spells.find((s) => s.type === 'active').n}).</p>`;
+        const nextSp = C.spells.find((x) => lvl() < x.lv);
+        $('[data-spells]', body).innerHTML = (act.length ? act.map((sp, i) => `<button class="spell ${cd[sp.id] ? 'cd' : ''}" data-sp="${sp.id}" data-spell="${S.cls}:${sp.id}"><span class="sp-ic">${sp.ic}</span><span><b>${sp.n}</b><small>${cd[sp.id] ? cd[sp.id] + ' kérdés múlva' : 'KÉSZ · ' + KEYS[i].toUpperCase() + ' gomb'}</small></span></button>`).join('')
+          : `<p class="muted" style="margin:0">Az első aktív képesség a 3. szinten nyílik (${C.spells.find((s) => s.type === 'active').n}).</p>`)
+          + C.spells.filter((x) => x.type === 'passive' && lvl() >= x.lv).map((x) => `<span class="passive-chip" data-spell="${S.cls}:${x.id}">${x.ic} ${x.n}</span>`).join('')
+          + (nextSp ? `<span class="next-sp" data-spell="${S.cls}:${nextSp.id}">Következő: ${nextSp.ic} ${nextSp.n} — ${nextSp.lv}. szint</span>` : '');
         $$('[data-sp]', body).forEach((el) => el.onclick = () => cast(el.dataset.sp));
         const bf = []; if (buff.triple) bf.push('💥 ×3 a következő'); if (buff.wall) bf.push(`🛡️ Pajzsfal ×${buff.wall}`); if (buff.slow) bf.push(`⏳ Nincs időkorlát ×${buff.slow}`); if (buff.storm) bf.push(`🌪️ ×2 sebzés ×${buff.storm}`);
         $('[data-o="buffs"]', body).textContent = bf.join(' · ');
@@ -506,7 +521,7 @@
           <div><span>🏆 Legyőzött bossok</span><b>${Object.keys(S.kills).length} / ${DUNGEONS.reduce((s, d) => s + d.bosses.length, 0)}</b></div>
         </div>
         <div class="statbox abil"><h3>Képességek <button class="btn-link btn" data-recls style="font-size:12px;float:right">Kaszt váltása</button></h3>
-          ${CLASSES[S.cls].spells.map((sp) => `<div class="${li.L >= sp.lv ? '' : 'locked'}" title="${esc(sp.d)}"><span>${sp.ic} ${sp.n} <small>${sp.type === 'active' ? 'aktív' : 'passzív'}</small></span><b>${li.L >= sp.lv ? '✔' : sp.lv + '. szint'}</b></div>`).join('')}
+          ${CLASSES[S.cls].spells.map((sp) => `<div class="abil-row ${li.L >= sp.lv ? '' : 'locked'}" data-spell="${S.cls}:${sp.id}"><span class="abil-ic">${sp.ic}</span><span class="abil-txt"><b>${sp.n}</b> <small>${sp.type === 'active' ? 'aktív · ' + sp.cd + ' kérdés újratöltés' : 'passzív'}</small><em>${sp.d}</em></span><b class="abil-lv">${li.L >= sp.lv ? '✔' : sp.lv + '. szint'}</b></div>`).join('')}
         </div>
         <div class="bag"><h3>Táska (${S.inv.length}/40) <small>Kattints: felvétel · Jobb klikk: eladás · ✨ Enchant a felvett tárgyakon (alt+katt)</small></h3>
           <div class="bag-grid">${S.inv.map((it) => `<div class="bag-it" data-item="${it.id}" data-hint="Bal klikk: felvétel · Jobb klikk: eladás (${fmt(it.price / 4)} arany)">${icon(it, 56)}</div>`).join('') || '<p class="muted">Üres. Bossok és trash dobnak tárgyakat, vagy vegyél a Boltban.</p>'}</div></div>
