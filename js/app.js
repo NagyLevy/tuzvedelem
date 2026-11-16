@@ -17,7 +17,7 @@
 
   function nav(active) {
     const links = $('#navLinks');
-    links.innerHTML = `<a href="#/" class="${active === 'home' ? 'on' : ''}">Leckék</a><a href="#/dungeon" class="grind-link ${active === 'dungeon' ? 'on' : ''}">⚔️ Dungeon</a><a href="#/rapid" class="grind-link ${active === 'rapid' ? 'on' : ''}">⚡ Rapid</a><a href="#/grind" class="grind-link ${active === 'grind' ? 'on' : ''}">🔥 Grind</a>` +
+    links.innerHTML = `<a href="#/" class="${active === 'home' ? 'on' : ''}">Leckék</a><a href="#/zh" class="grind-link ${active === 'zh' ? 'on' : ''}">📝 ZH-gyakorló</a><a href="#/dungeon" class="grind-link ${active === 'dungeon' ? 'on' : ''}">⚔️ Dungeon</a><a href="#/rapid" class="grind-link ${active === 'rapid' ? 'on' : ''}">⚡ Rapid</a><a href="#/grind" class="grind-link ${active === 'grind' ? 'on' : ''}">🔥 Grind</a>` +
       TM.lessons.map((l) => `<a href="#/lecke/${l.id}" class="${active === l.id ? 'on' : ''}">${l.no}. ${l.short || l.title}</a>`).join('');
   }
 
@@ -38,6 +38,7 @@
           <p class="lead reveal" style="--d:.35s">Nem bemagolod — <b>látod</b>, hogyan ég a tűz, miért alszik ki, és mit mond rá pontosan a ZH. Minden leckében a szó szerinti ZH-mondatok kiemelve.</p>
           <div class="cta reveal" style="--d:.5s">
             ${nextL ? `<a class="btn btn-fire" href="#/lecke/${nextL.id}">${TM.store.lesson(nextL.id).seen.length ? 'Folytatás' : 'Kezdjük'}: ${nextL.title}</a>` : ''}
+            <a class="btn btn-fire" href="#/zh">📝 ZH-gyakorló</a>
             <a class="btn btn-fire" href="#/dungeon">⚔️ Dungeon (RPG)</a>
             <a class="btn btn-fire" href="#/rapid">⚡ Rapid kérdésdarálás</a>
             <a class="btn btn-ghost" href="#/grind">🔥 Kérdés-grind</a>
@@ -181,6 +182,7 @@
     TM.destroyScenes();
     const m = location.hash.match(/^#\/lecke\/([\w-]+)/);
     if (m) lesson(m[1]);
+    else if (location.hash.startsWith('#/zh')) { nav('zh'); document.title = 'ZH-gyakorló · Tűz- és munkavédelem'; window.scrollTo(0, 0); cleanup.push(TM.zh(app)); }
     else if (location.hash.startsWith('#/dungeon')) { nav('dungeon'); document.title = 'Dungeon · Tűz- és munkavédelem'; window.scrollTo(0, 0); cleanup.push(TM.rpg(app)); }
     else if (location.hash.startsWith('#/rapid')) { nav('rapid'); document.title = 'Rapid · Tűz- és munkavédelem'; window.scrollTo(0, 0); cleanup.push(TM.rapid(app)); }
     else if (location.hash.startsWith('#/grind')) { nav('grind'); document.title = 'Grind · Tűz- és munkavédelem'; window.scrollTo(0, 0); cleanup.push(TM.grind(app)); }
