@@ -17,7 +17,7 @@
 
   function nav(active) {
     const links = $('#navLinks');
-    links.innerHTML = `<a href="#/" class="${active === 'home' ? 'on' : ''}">Leckék</a><a href="#/zh" class="grind-link ${active === 'zh' ? 'on' : ''}">📝 ZH-gyakorló</a><a href="#/dungeon" class="grind-link ${active === 'dungeon' ? 'on' : ''}">⚔️ Dungeon</a><a href="#/rapid" class="grind-link ${active === 'rapid' ? 'on' : ''}">⚡ Rapid</a><a href="#/grind" class="grind-link ${active === 'grind' ? 'on' : ''}">🔥 Grind</a>` +
+    links.innerHTML = `<a href="#/" class="${active === 'home' ? 'on' : ''}">Leckék</a><a href="#/kartyak" class="grind-link ${active === 'kartyak' ? 'on' : ''}">🃏 ZH-kártyák</a><a href="#/zh" class="grind-link ${active === 'zh' ? 'on' : ''}">📝 ZH-gyakorló</a><a href="#/dungeon" class="grind-link ${active === 'dungeon' ? 'on' : ''}">⚔️ Dungeon</a><a href="#/rapid" class="grind-link ${active === 'rapid' ? 'on' : ''}">⚡ Rapid</a><a href="#/grind" class="grind-link ${active === 'grind' ? 'on' : ''}">🔥 Grind</a>` +
       TM.lessons.map((l) => `<a href="#/lecke/${l.id}" class="${active === l.id ? 'on' : ''}">${l.no}. ${l.short || l.title}</a>`).join('');
   }
 
@@ -182,6 +182,7 @@
     TM.destroyScenes();
     const m = location.hash.match(/^#\/lecke\/([\w-]+)/);
     if (m) lesson(m[1]);
+    else if (location.hash.startsWith('#/kartyak')) { nav('kartyak'); document.title = 'ZH-kártyák · Tűz- és munkavédelem'; window.scrollTo(0, 0); cleanup.push(TM.zhCards(app)); }
     else if (location.hash.startsWith('#/zh')) { nav('zh'); document.title = 'ZH-gyakorló · Tűz- és munkavédelem'; window.scrollTo(0, 0); cleanup.push(TM.zh(app)); }
     else if (location.hash.startsWith('#/dungeon')) { nav('dungeon'); document.title = 'Dungeon · Tűz- és munkavédelem'; window.scrollTo(0, 0); cleanup.push(TM.rpg(app)); }
     else if (location.hash.startsWith('#/rapid')) { nav('rapid'); document.title = 'Rapid · Tűz- és munkavédelem'; window.scrollTo(0, 0); cleanup.push(TM.rapid(app)); }

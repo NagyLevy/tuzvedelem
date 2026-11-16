@@ -36,3 +36,9 @@
 .zh-ans { margin-top: 12px; padding: 14px 16px; border-radius: 14px; background: rgba(31, 157, 85, .1); border: 1px solid rgba(31, 157, 85, .35); font-size: 17px; line-height: 1.55; }
 .zh-no { color: var(--danger) !important; }
 .zh-foot { text-align: center; font-size: 12px; color: var(--ink-3); margin-top: 16px; }
+
+.zh .cards-deck { height: 420px; margin-top: 18px; }
+.zh .flash .front h3 { font-size: clamp(22px, 5.5vw, 34px); line-height: 1.25; }
+.zh .flash .front h3 small { display: block; margin-top: 10px; font-size: 15px; font-weight: 500; color: var(--ink-2); letter-spacing: 0; }
+.zh .flash .back { font-size: 19px; line-height: 1.6; }
+.zh .flash .back small { color: #a99f8f; font-size: 14px; }

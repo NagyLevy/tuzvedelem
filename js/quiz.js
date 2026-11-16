@@ -156,8 +156,8 @@
     const show = () => {
       const c = cards[order[i]];
       f.classList.remove('flip');
-      setTimeout(() => { $('h3', f).textContent = c.term; $('.back', f).innerHTML = c.def; }, f.classList.contains('flip') ? 250 : 0);
-      $('h3', f).textContent = c.term; $('.back', f).innerHTML = c.def;
+      setTimeout(() => { $('h3', f).innerHTML = c.term; $('.back', f).innerHTML = c.def; }, f.classList.contains('flip') ? 250 : 0);
+      $('h3', f).innerHTML = c.term; $('.back', f).innerHTML = c.def;
       $('[data-c]', deck).textContent = `${i + 1} / ${cards.length}`;
     };
     f.onclick = () => f.classList.toggle('flip');
