@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Ein Tag auf Deutsch</title>
+<meta name="description" content="Tagesablauf — egy német nap, animációkkal, órával, kártyákkal." />
+<link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..800&display=swap" rel="stylesheet" />
+<style>
+:root{color-scheme:light;--bg:#f5f5f7;--card:#fff;--ink:#1d1d1f;--ink2:#6e6e73;--ink3:#86868b;--line:rgba(0,0,0,.08);--fill:rgba(0,0,0,.05);
+--accent:#0071e3;--der:#2f6bff;--die:#ff3b5c;--das:#14b86a;--ok:#1f9d55;--bad:#e5251b;--ease:cubic-bezier(.22,1,.36,1);--spring:cubic-bezier(.34,1.4,.64,1)}
+@media(prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#000;--card:#111113;--ink:#f5f5f7;--ink2:#a1a1a6;--ink3:#6e6e73;--line:rgba(255,255,255,.1);--fill:rgba(255,255,255,.07)}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:400 17px/1.5 Inter,-apple-system,'SF Pro Text','Segoe UI',system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+button{font:inherit;color:inherit}.wrap{max-width:900px;margin:0 auto;padding:0 18px}
+nav{position:sticky;top:0;z-index:20;display:flex;gap:4px;justify-content:center;padding:10px;background:color-mix(in srgb,var(--bg) 78%,transparent);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid var(--line);overflow-x:auto}
+nav a{flex:none;text-decoration:none;color:var(--ink2);font-size:13px;font-weight:600;padding:7px 12px;border-radius:99px}nav a:hover{background:var(--fill);color:var(--ink)}
+section{padding:70px 0}h1,h2{letter-spacing:-.04em;line-height:1.02;margin:0}h2{font-size:clamp(34px,7vw,56px)}.kick{font-size:14px;font-weight:700;color:var(--accent);margin-bottom:10px}
+.lead{font-size:clamp(18px,3.4vw,22px);color:var(--ink2);margin:14px 0 0;max-width:640px}
+.grad{background:linear-gradient(100deg,#ff9f0a,#ff375f 50%,#5e5ce6);-webkit-background-clip:text;background-clip:text;color:transparent}
+.card{background:var(--card);border:1px solid var(--line);border-radius:26px;box-shadow:0 1px 2px rgba(0,0,0,.04),0 20px 50px rgba(0,0,0,.08);overflow:hidden}
+.reveal{opacity:0;transform:translateY(30px);transition:opacity .9s var(--ease),transform .9s var(--ease)}.reveal.in{opacity:1;transform:none}
+/* hero */
+.hero{min-height:92vh;display:grid;place-items:center;text-align:center;position:relative;overflow:hidden;padding:40px 0}
+.hero h1{font-size:clamp(52px,13vw,120px);font-weight:800}.hero .sun{position:absolute;width:90px;height:90px;border-radius:50%;background:radial-gradient(circle,#ffe07a,#ff9f0a 60%,transparent 70%);filter:blur(1px);box-shadow:0 0 80px #ffb340;animation:arc 14s linear infinite}
+@keyframes arc{0%{left:-10%;top:80%}25%{top:22%}50%{left:50%;top:8%}75%{top:22%}100%{left:105%;top:80%}}
+.pill{display:inline-flex;gap:8px;align-items:center;padding:7px 14px;border-radius:99px;background:var(--fill);font-size:13px;font-weight:600;color:var(--ink2);margin-bottom:22px}
+.cta{display:inline-block;margin-top:28px;padding:14px 26px;border-radius:99px;background:var(--accent);color:#fff;text-decoration:none;font-weight:700}
+/* nap */
+.day{display:grid;grid-template-columns:1fr 1fr;min-height:420px}@media(max-width:720px){.day{grid-template-columns:1fr}}
+.sky{position:relative;min-height:300px;transition:background 1s var(--ease);display:grid;place-items:center}
+.orb{position:absolute;width:56px;height:56px;border-radius:50%;transition:left 1s var(--ease),top 1s var(--ease),background 1s,box-shadow 1s}
+.clock{position:relative;width:170px;height:170px}.clock svg{width:100%;height:100%;filter:drop-shadow(0 18px 30px rgba(0,0,0,.25))}
+.hand{transition:transform 1s var(--spring);transform-origin:100px 100px}
+.ev{padding:26px 24px;display:flex;flex-direction:column;justify-content:center}
+.ev .t{font-size:44px;font-weight:800;letter-spacing:-.04em;font-variant-numeric:tabular-nums}.ev .de{font-size:22px;font-weight:700;line-height:1.3;margin:6px 0}.ev .hu{color:var(--ink2);font-size:17px}.ev .emo{font-size:46px}
+.ev .say{display:inline-block;margin-top:10px;padding:5px 12px;border-radius:99px;background:rgba(0,113,227,.12);color:var(--accent);font-weight:700;font-size:14px}
+.ctrl{display:flex;gap:10px;align-items:center;padding:14px 18px;border-top:1px solid var(--line)}.ctrl input{flex:1;accent-color:var(--accent)}
+.btn{border:0;border-radius:99px;padding:11px 18px;font-weight:700;cursor:pointer;background:var(--accent);color:#fff}.btn.ghost{background:var(--fill);color:var(--ink)}
+.math{margin-top:20px;padding:20px 22px}.math .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;font-size:clamp(17px,3.6vw,22px);font-weight:700}
+.chip{padding:6px 12px;border-radius:12px;background:var(--fill)}.chip.g{background:rgba(31,157,85,.15);color:var(--ok)}.chip.r{background:rgba(229,37,27,.12);color:var(--bad)}
+.math .step{opacity:0;transform:translateY(8px);transition:all .6s var(--ease)}.math.in .step{opacity:1;transform:none}
+/* idő-kvíz */
+.tq{display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:center;padding:24px}@media(max-width:640px){.tq{grid-template-columns:1fr;justify-items:center}}
+.opts{display:grid;gap:10px;width:100%}.opt{padding:14px 16px;border-radius:16px;border:1.5px solid var(--line);background:var(--card);text-align:left;font-weight:650;font-size:17px;cursor:pointer;transition:transform .15s,border-color .2s,background .2s}
+.opt:active{transform:scale(.97)}.opt.ok{border-color:var(--ok);background:rgba(31,157,85,.12)}.opt.bad{border-color:var(--bad);background:rgba(229,37,27,.1);animation:sh .35s}
+@keyframes sh{25%,75%{transform:translateX(-5px)}50%{transform:translateX(5px)}}
+.rule{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:18px}@media(max-width:640px){.rule{grid-template-columns:1fr 1fr}}
+.rule div{padding:14px;border-radius:18px;background:var(--card);border:1px solid var(--line)}.rule b{display:block;font-size:20px}.rule small{color:var(--ink2)}
+.score{font-weight:800;color:var(--ink2);font-size:14px;margin-bottom:10px}
+/* kártyák */
+.deck{height:300px;perspective:1400px;cursor:pointer;margin-top:24px}.fl{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .6s var(--ease)}.deck.flip .fl{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:28px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;border:1px solid var(--line);box-shadow:0 30px 60px rgba(0,0,0,.12)}
+.face.f{background:var(--card)}.face.b{background:linear-gradient(160deg,#0071e3,#5e5ce6);color:#fff;transform:rotateY(180deg)}
+.face .w{font-size:clamp(30px,7vw,46px);font-weight:800;letter-spacing:-.03em}.face .pl{margin-top:8px;color:var(--ink3);font-size:15px;font-weight:600}.face.b .w{color:#fff}
+.art{font-weight:800}.art.der{color:var(--der)}.art.die{color:var(--die)}.art.das{color:var(--das)}
+.fnav{display:flex;justify-content:center;gap:12px;align-items:center;margin-top:14px;color:var(--ink2);font-variant-numeric:tabular-nums}
+.legend{display:flex;gap:14px;justify-content:center;margin-top:12px;font-size:13px;font-weight:700}
+/* der-die-das */
+.gg{padding:28px 20px;text-align:center}.gg .w{font-size:clamp(34px,8vw,52px);font-weight:800;letter-spacing:-.03em}.gg .hu{color:var(--ink2);margin-bottom:20px}
+.ggb{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.ggb button{padding:18px 6px;border-radius:18px;border:0;font-size:22px;font-weight:800;color:#fff;cursor:pointer;transition:transform .15s}
+.ggb button:active{transform:scale(.94)}.ggb .der{background:var(--der)}.ggb .die{background:var(--die)}.ggb .das{background:var(--das)}
+.flash{animation:fl .5s}@keyframes fl{0%{box-shadow:0 0 0 0 rgba(31,157,85,.6)}100%{box-shadow:0 0 0 24px rgba(31,157,85,0)}}
+.streak{font-size:14px;font-weight:800;color:var(--accent);margin-top:12px;min-height:20px}
+/* házimunka */
+.hw{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:20px}
+.hw div{padding:16px;border-radius:20px;background:var(--card);border:1px solid var(--line)}.hw .e{font-size:32px}.hw b{display:block;margin-top:6px}.hw small{color:var(--ink2)}
+.mood{display:inline-block;margin-top:8px;font-size:12px;font-weight:800;padding:3px 9px;border-radius:99px}
+footer{text-align:center;color:var(--ink3);font-size:13px;padding:40px 18px 60px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);opacity:0;padding:10px 18px;border-radius:99px;background:var(--ink);color:var(--bg);font-weight:700;transition:all .35s var(--spring);z-index:50}.toast.show{opacity:1;transform:translate(-50%,0)}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<nav><a href="#nap">🕐 A nap</a><a href="#ido">⏰ Időpontok</a><a href="#kartyak">🃏 Kártyák</a><a href="#nem">🎯 der/die/das</a><a href="#hazimunka">🧹 Házimunka</a></nav>
+
+<header class="hero"><div class="sun"></div><div class="wrap">
+  <div class="pill">🇩🇪 Tagesablauf · 0 attention span edition</div>
+  <h1>Ein Tag<br><span class="grad">auf Deutsch.</span></h1>
+  <p class="lead" style="margin-left:auto;margin-right:auto">Egy teljes nap németül: húzd az időt, és nézd, mi történik. Időpontok, szavak, nemek — kártyán és játékkal.</p>
+  <a class="cta" href="#nap">Kezdjük ☀️</a>
+</div></header>
+
+<section id="nap"><div class="wrap">
+  <div class="kick reveal">1 · A nap</div><h2 class="reveal">Húzd az időt.</h2>
+  <p class="lead reveal">Minden időpont a szövegből van. Az égbolt, az óra és a mondat együtt változik.</p>
+  <div class="card reveal" style="margin-top:28px"><div class="day">
+    <div class="sky" id="sky"><div class="orb" id="orb"></div><div class="clock" id="dayClock"></div></div>
+    <div class="ev"><div class="emo" id="evEmo"></div><div class="t" id="evT"></div><div class="de" id="evDe"></div><div class="hu" id="evHu"></div><div><span class="say" id="evSay"></span></div></div>
+  </div>
+  <div class="ctrl"><button class="btn ghost" id="prev">←</button><input type="range" id="slider" min="0" value="0" /><button class="btn ghost" id="next">→</button><button class="btn" id="play">▶</button></div></div>
+
+  <div class="card math reveal" id="math">
+    <div class="kick">🧮 Számold ki: tényleg 8 óra?</div>
+    <div class="row"><span class="step chip">8:00 → 16:30</span><span class="step">=</span><span class="step chip">8,5 óra</span><span class="step">−</span><span class="step chip r">0,5 óra ebédszünet (12:00–12:30)</span><span class="step">=</span><span class="step chip g">8 óra ✓ „ich arbeite 8 Stunden”</span></div>
+    <p class="lead" style="font-size:15px">Szombaton: <b>Viertel nach acht bis halb 5</b> = 8:15 → 16:30 = 8 óra 15 perc. A „10 Stunden” itt <b>10 tanórát</b> jelent (a <i>Stunde</i> = tanóra is), nem 10 órát.</p>
+  </div>
+</div></section>
+
+<section id="ido"><div class="wrap">
+  <div class="kick reveal">2 · Időpontok</div><h2 class="reveal">„Halb 7” = <span class="grad">6:30</span>.</h2>
+  <p class="lead reveal">A németben a „halb” a <b>következő</b> óra fele — pont mint a magyar „fél hét”. A negyedeknél viszont más: „Viertel nach acht” = 8:15 (magyarul negyed kilenc).</p>
+  <div class="rule reveal"><div><b>7 Uhr</b><small>7:00</small></div><div><b>Viertel nach 7</b><small>7:15 · negyed nyolc</small></div><div><b>halb 8</b><small>7:30 · fél nyolc</small></div><div><b>Viertel vor 8</b><small>7:45 · háromnegyed nyolc</small></div></div>
+  <div class="card tq reveal" style="margin-top:22px"><div class="clock" id="quizClock"></div><div style="width:100%"><div class="score" id="tqScore">0 / 0</div><div class="opts" id="tqOpts"></div></div></div>
+</div></section>
+
+<section id="kartyak"><div class="wrap">
+  <div class="kick reveal">3 · Kártyák</div><h2 class="reveal">Koppints, fordul.</h2>
+  <p class="lead reveal">Elöl német (a névelő színes), hátul magyar. A színkód segít megjegyezni a nemet.</p>
+  <div class="legend reveal"><span class="art der">der = hímnem</span><span class="art die">die = nőnem</span><span class="art das">das = semlegesnem</span></div>
+  <div class="deck reveal" id="deck"><div class="fl"><div class="face f" id="fcF"></div><div class="face b" id="fcB"></div></div></div>
+  <div class="fnav"><button class="btn ghost" id="fcP">←</button><span id="fcN"></span><button class="btn ghost" id="fcX">↻ keverés</button><button class="btn ghost" id="fcNx">→</button></div>
+</div></section>
+
+<section id="nem"><div class="wrap">
+  <div class="kick reveal">4 · Játék</div><h2 class="reveal">der, die vagy das?</h2>
+  <p class="lead reveal">Gyors tipp: koppints a jó névelőre. Sorozatot építs!</p>
+  <div class="card gg reveal" id="gg"><div class="w" id="ggW"></div><div class="hu" id="ggHu"></div>
+    <div class="ggb"><button class="der" data-g="der">der</button><button class="die" data-g="die">die</button><button class="das" data-g="das">das</button></div>
+    <div class="streak" id="ggS"></div></div>
+</div></section>
+
+<section id="hazimunka"><div class="wrap">
+  <div class="kick reveal">5 · Házimunka</div><h2 class="reveal">Mit szeretsz, mit utálsz?</h2>
+  <p class="lead reveal">A szövegből: <i>„Ich habe Staubsaugen gern, aber Geschirr spülen hasse ich. Kochen finde ich kreativ, Fenster putzen anstrengend und Bügeln langweilig.”</i></p>
+  <div class="hw" id="hw"></div>
+</div></section>
+
+<footer>Tagesablauf · demó tanulóoldal · a szöveg és a szószedet a feladatlapból</footer>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){'use strict';
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const toast=m=>{const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(toast.k);toast.k=setTimeout(()=>t.classList.remove('show'),1500)};
+/* reveal */
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.15});
+$$('.reveal,.math').forEach(n=>io.observe(n));
+
+/* óra SVG */
+function clockSVG(){return `<svg viewBox="0 0 200 200"><circle cx="100" cy="100" r="92" fill="var(--card)" stroke="var(--line)" stroke-width="3"/>${Array.from({length:12},(_,i)=>{const a=i*30*Math.PI/180;return `<line x1="${100+Math.sin(a)*78}" y1="${100-Math.cos(a)*78}" x2="${100+Math.sin(a)*86}" y2="${100-Math.cos(a)*86}" stroke="var(--ink2)" stroke-width="${i%3?2:4}" stroke-linecap="round"/>`}).join('')}
+<line class="hand hh" x1="100" y1="100" x2="100" y2="52" stroke="var(--ink)" stroke-width="7" stroke-linecap="round"/><line class="hand mh" x1="100" y1="100" x2="100" y2="28" stroke="var(--accent)" stroke-width="4" stroke-linecap="round"/><circle cx="100" cy="100" r="6" fill="var(--accent)"/></svg>`}
+function setClock(el,h,m,turns){const mm=(turns||0)*360+m*6, hh=((h%12)+m/60)*30+(turns||0)*30;el.querySelector('.hh').style.transform=`rotate(${hh}deg)`;el.querySelector('.mh').style.transform=`rotate(${mm}deg)`}
+const pad=m=>String(m).padStart(2,'0');
+function sayTime(h,m){const n=h%12||12,nx=(h+1)%12||12;if(m===0)return `${n} Uhr`;if(m===15)return `Viertel nach ${n}`;if(m===30)return `halb ${nx}`;if(m===45)return `Viertel vor ${nx}`;return `${n}:${pad(m)}`}
+
+/* ---- a nap ---- */
+const DAY=[
+[6,30,'⏰','An einem Werktag stehe ich um halb 7 auf.','Munkanapon fél hétkor kelek fel.'],
+[6,40,'🚿','Ich gehe ins Badezimmer, dort wasche ich mich und kämme mich.','Bemegyek a fürdőszobába, megmosakszom és megfésülködöm.'],
+[6,50,'👕','Dann ziehe ich mich im Zimmer an: Jeans, ein T-Shirt und einen Pullover.','Aztán a szobában felöltözöm: farmer, póló és pulóver.'],
+[7,0,'🥐','Ich frühstücke: Tee und ein Brötchen mit Wurst, Käse und Gemüse.','Reggelizem: tea és zsemle felvágottal, sajttal, zöldséggel.'],
+[7,15,'🪥','Nach dem Frühstück putze ich mir die Zähne.','Reggeli után fogat mosok.'],
+[7,30,'🚌','Ich fahre um halb 8 mit dem Bus zur Arbeit.','Fél nyolckor busszal megyek dolgozni.'],
+[8,0,'💼','Die Arbeit beginnt um 8 Uhr.','A munka 8-kor kezdődik.'],
+[12,0,'🍲','Von 12 bis halb 1 habe ich Mittagspause: Gemüsesuppe und Pörkölt mit Nockerln.','12-től fél egyig ebédszünet: zöldségleves és pörkölt nokedlivel.'],
+[16,30,'🏁','Um halb 5 ist die Arbeit zu Ende — ich arbeite 8 Stunden.','Fél ötkor vége a munkának — 8 órát dolgozom.'],
+[17,0,'🛍️','Nach der Arbeit gehe ich in die Stadt und kaufe ein.','Munka után bemegyek a városba és bevásárolok.'],
+[17,45,'🧒','Ich hole mein Kind vom Kindergarten ab.','Elhozom a gyerekemet az óvodából.'],
+[18,15,'🐕','Ich gehe mit meinem Hund Gassi und höre Musik.','Kutyát sétáltatok és zenét hallgatok.'],
+[19,0,'🍳','Ich esse meistens um 7 Uhr zu Abend: Rühreier oder Brot mit Aufschnitt.','Általában 7-kor vacsorázom: rántotta vagy kenyér felvágottal.'],
+[20,30,'📺','Abends lese ich ein Buch oder sehe fern.','Esténként olvasok vagy tévét nézek.'],
+[21,30,'🚿','Vor dem Schlafengehen dusche ich und putze mir die Zähne.','Lefekvés előtt lezuhanyozom és fogat mosok.'],
+[22,0,'😴','Gegen 10 Uhr gehe ich schlafen.','10 óra körül lefekszem aludni.']];
+const dc=$('#dayClock');dc.innerHTML=clockSVG();const sl=$('#slider');sl.max=DAY.length-1;let di=0,turns=0,lastH=6,playT=0;
+function sky(h){const t=(h-6)/16;const day=h>=7&&h<19;const g=h<7?'linear-gradient(180deg,#ff9a76,#ffd29c)':h<17?'linear-gradient(180deg,#5ab0ff,#bfe3ff)':h<19.5?'linear-gradient(180deg,#ff7e5f,#feb47b)':'linear-gradient(180deg,#0b1030,#2a2f6a)';
+$('#sky').style.background=g;const o=$('#orb');const x=10+t*80,y=70-Math.sin(Math.min(1,Math.max(0,t))*Math.PI)*55;o.style.left=x+'%';o.style.top=y+'%';
+o.style.background=h<19.5?'radial-gradient(circle,#fff6c9,#ffc93c 60%,#ff9f0a)':'radial-gradient(circle,#fff,#d7dcff 70%)';o.style.boxShadow=h<19.5?'0 0 60px #ffcf5a':'0 0 40px #b9c2ff'}
+function showDay(i){di=i;sl.value=i;const[h,m,e,de,hu]=DAY[i];if(h<lastH)turns++;lastH=h;setClock(dc,h,m,0);$('#evEmo').textContent=e;$('#evT').textContent=`${h}:${pad(m)}`;$('#evDe').textContent=de;$('#evHu').textContent=hu;$('#evSay').textContent='🗣️ '+sayTime(h,m);sky(h+m/60);
+const ev=$('.ev');ev.animate([{opacity:.3,transform:'translateY(10px)'},{opacity:1,transform:'none'}],{duration:450,easing:'cubic-bezier(.22,1,.36,1)'})}
+sl.oninput=()=>showDay(+sl.value);$('#prev').onclick=()=>showDay(Math.max(0,di-1));$('#next').onclick=()=>showDay((di+1)%DAY.length);
+$('#play').onclick=()=>{if(playT){clearInterval(playT);playT=0;$('#play').textContent='▶';return}$('#play').textContent='❚❚';playT=setInterval(()=>showDay((di+1)%DAY.length),1800)};
+showDay(0);
+
+/* ---- időpont-kvíz ---- */
+const qc=$('#quizClock');qc.innerHTML=clockSVG();let tqOk=0,tqN=0,ans='';
+function newTQ(){const h=1+((Math.random()*11)|0),m=[0,15,30,45][(Math.random()*4)|0];setClock(qc,h,m);ans=sayTime(h,m);
+const wrong=new Set();const cands=[sayTime(h,(m+30)%60===m?15:(m+30)%60),sayTime((h+1)%12||12,m),m===30?`halb ${h}`:`halb ${(h+1)%12||12}`,m===15?`Viertel vor ${h}`:`Viertel nach ${h}`,`${h} Uhr`];cands.forEach(c=>{if(c!==ans&&wrong.size<3)wrong.add(c)});
+const opts=[ans,...wrong].sort(()=>Math.random()-.5);$('#tqOpts').innerHTML=opts.map(o=>`<button class="opt">${o}</button>`).join('');
+$$('#tqOpts .opt').forEach(b=>b.onclick=()=>{tqN++;if(b.textContent===ans){tqOk++;b.classList.add('ok');setTimeout(newTQ,600)}else{b.classList.add('bad');$$('#tqOpts .opt').find(x=>x.textContent===ans).classList.add('ok');setTimeout(newTQ,1300)}$('#tqScore').textContent=`${tqOk} / ${tqN} · ${h}:${pad(m)}`;$$('#tqOpts .opt').forEach(x=>x.disabled=true)})}
+newTQ();
+
+/* ---- szókincs ---- */
+const RAW=`der Werktag,-e|munkanap;aufstehen|felkel;das Badezimmer|fürdőszoba;sich waschen|megmosakszik;das Zimmer|szoba;sich kämmen|fésülködik;das Frühstück,-e|reggeli;sich anziehen|felöltözik;der Tee,-s|tea;frühstücken|reggelizik;das Brötchen|zsemle;trinken|iszik;die Wurst,-ü,e|felvágott, kolbász;essen|eszik;der Käse|sajt;Zähne putzen|fogat mos;das Gemüse|zöldség;fahren|utazik, megy járművel;der Bus,-se|busz;arbeiten|dolgozik;die Arbeit,-en|munka;beginnen|kezdődik;die Mittagspause,-en|ebédszünet;einkaufen|bevásárol;die Kantine,-n|menza;spazieren gehen|sétál;die Suppe,-n|leves;abholen|elhoz, felvesz;die Gemüsesuppe,-n|zöldségleves;sich ausruhen|pihen;das Hauptgericht,-e|főétel;Musik hören|zenét hallgat;die Stadt,-ä,e|város;surfen|internetezik;der Kindergarten,-ä|óvoda;Gassi gehen|kutyát sétáltat;das Internet|internet;spielen|játszik;der Privatunterricht,-e|magánóra;zu Abend essen|vacsorázik;das Training,-s|edzés;lesen|olvas;das Abendessen|vacsora;fernsehen|tévét néz;das Rührei,-er|rántotta;duschen|zuhanyozik;das Brot,-e|kenyér;schlafen gehen|lefekszik aludni;der Aufschnitt,-e|felvágott;besuchen|látogat;die Tomate,-en|paradicsom;sich treffen|találkozik;die Paprika,-s|paprika;ausgehen|szórakozni megy;das Restaurant,-s|étterem;Rad fahren|kerékpározik;die Pizzeria|pizzéria;saugen|porszívózik;das Buch,-ü,er|könyv;Staub wischen|port töröl;der Unterricht,-e|tanítás, oktatás;aufwischen|felmos;die Fernschule,-n|levelező iskola;Wäsche waschen|mos;die Woche,-n|hét;Geschirr spülen|mosogat;die Disco,-s|diszkó;kochen|főz;die Bar,-s|bár;bügeln|vasal;der Ausflug,-ü,e|kirándulás;putzen|takarít;das Wochenende,-n|hétvége;anstrengend|fárasztó;die Hausarbeit,-en|házimunka;langweilig|unalmas;die Ordnung|rend;später|később;der Staub|por;natürlich|természetesen;die Wäsche|mosnivaló, ruha;beliebt|kedvelt;das Geschirr,-e|edény;die Mikrowelle,-n|mikrohullámú sütő;der Müll|szemét;der Herd,-e|tűzhely;das Staubsaugen|porszívózás;der Backofen,-ö,en|sütő;das Kochen|főzés;die Waschmaschine,-n|mosógép;das Fenster|ablak;der Staubsauger|porszívó;das Bügeln|vasalás;das Bügeleisen|vasaló`;
+const V=RAW.split(';').map(x=>{const[de,hu]=x.split('|');const m=de.match(/^(der|die|das) ([^,]+)(,.*)?$/);return m?{g:m[1],w:m[2],pl:m[3]?m[3].slice(1):'',hu}:{g:'',w:de,pl:'',hu}});
+const fmt=v=>v.g?`<span class="art ${v.g}">${v.g}</span> ${v.w}`:v.w;
+let order=V.map((_,i)=>i),fi=0;const deck=$('#deck');
+function showFC(){const v=V[order[fi]];deck.classList.remove('flip');$('#fcF').innerHTML=`<div class="w">${fmt(v)}</div>${v.pl?`<div class="pl">többes: ${v.pl}</div>`:v.g?'':'<div class="pl">ige / melléknév</div>'}`;$('#fcB').innerHTML=`<div class="w">${v.hu}</div>`;$('#fcN').textContent=`${fi+1} / ${V.length}`}
+deck.onclick=()=>deck.classList.toggle('flip');$('#fcNx').onclick=()=>{fi=(fi+1)%V.length;showFC()};$('#fcP').onclick=()=>{fi=(fi-1+V.length)%V.length;showFC()};
+$('#fcX').onclick=()=>{order.sort(()=>Math.random()-.5);fi=0;showFC();toast('Megkeverve')};showFC();
+
+/* ---- der/die/das ---- */
+const N=V.filter(v=>v.g);let gcur=null,gs=0,gbest=0;
+function newG(){gcur=N[(Math.random()*N.length)|0];$('#ggW').textContent=gcur.w;$('#ggHu').textContent=gcur.hu}
+$$('.ggb button').forEach(b=>b.onclick=()=>{const card=$('#gg');if(b.dataset.g===gcur.g){gs++;gbest=Math.max(gbest,gs);card.classList.remove('flash');void card.offsetWidth;card.classList.add('flash');$('#ggS').textContent=`🔥 ${gs} zsinórban · rekord ${gbest}`;if(gs%10===0)toast(`${gs}! Ein Profi! 🇩🇪`);newG()}
+else{toast(`✗ ${gcur.g} ${gcur.w}`);gs=0;$('#ggS').textContent=`rekord ${gbest}`;card.animate([{transform:'translateX(-8px)'},{transform:'translateX(8px)'},{transform:'none'}],{duration:300});setTimeout(newG,900)}});
+newG();
+
+/* ---- házimunka ---- */
+const HW=[['🧹','saugen','porszívózik','gern ❤️','#1f9d55'],['🍽️','Geschirr spülen','mosogat','hasse ich 😤','#e5251b'],['🍳','kochen','főz','kreativ 🎨','#5e5ce6'],['🪟','Fenster putzen','ablakot pucol','anstrengend 😮‍💨','#ff9f0a'],['👔','bügeln','vasal','langweilig 🥱','#86868b'],['🧺','Wäsche waschen','mos','',''],['🧽','Staub wischen','port töröl','',''],['🗑️','den Müll hinausbringen','kiviszi a szemetet','','']];
+$('#hw').innerHTML=HW.map(([e,de,hu,mood,c])=>`<div class="reveal"><div class="e">${e}</div><b>${de}</b><small>${hu}</small>${mood?`<br><span class="mood" style="background:${c}22;color:${c}">${mood}</span>`:''}</div>`).join('');
+$$('#hw .reveal').forEach(n=>io.observe(n));
+})();
+</script>
+</body>
+</html>
