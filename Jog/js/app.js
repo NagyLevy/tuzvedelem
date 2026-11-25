@@ -730,7 +730,9 @@
   }
   function viewSync(p) {
     setTone('#0a84ff');
-    const url = location.href.split('#')[0] + '#/sync?d=' + syncCode(), st = gStats(GPOOL), inc = p.d ? syncRead(p.d) : null;
+    /* helyi fájlból vagy localhostról a telefon nem érné el → ilyenkor az élő oldalra mutat */
+    const base = /^https?:$/.test(location.protocol) && !/^(localhost|127\.|\[::1\])/.test(location.hostname) ? location.href.split('#')[0] : 'https://nagylevy.github.io/tuzvedelem/Jog/index.html';
+    const url = base + '#/sync?d=' + syncCode(), st = gStats(GPOOL), inc = p.d ? syncRead(p.d) : null;
     const incHTML = !p.d ? '' : !inc
       ? `<div class="card sync-in bad"><h3 class="h-card">⚠️ Ezt a kódot nem tudom beolvasni</h3><p class="muted">Valószínűleg a két eszközön más verzió fut. Frissítsd az oldalt mindkét helyen, aztán küldd át újra.</p></div>`
       : `<div class="card sync-in"><h3 class="h-card">📥 Haladás érkezett a másik eszközről</h3><p>Benne: <b>${inc.lv.filter((x) => x === 3).length}</b> kérdés „megy” · ${inc.xp} XP</p><p class="muted">Egyesítéskor kérdésenként a jobbik eredmény marad meg, semmi nem vész el.</p><div class="btn-row"><button class="btn big-go" id="syncGo">✓ Egyesítés ezen az eszközön</button></div></div>`;
