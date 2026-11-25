@@ -33,7 +33,7 @@
   /* ---------- Haladás ---------- */
   const KEY = 'jog.v1';
   const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } };
-  const S = Object.assign({ seen: {}, wrong: [], best: 0, flash: {}, srs: {}, xp: 0, days: {}, story: {}, pb: {}, coachN: 0 }, load());
+  const S = Object.assign({ seen: {}, wrong: [], best: 0, flash: {}, srs: {}, xp: 0, days: {}, story: {}, pb: {}, coachN: 0, g: {} }, load());
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* privát mód: nem baj */ } };
   const today = () => new Date().toLocaleDateString('sv'); // ÉÉÉÉ-HH-NN, helyi idő
   /* napi számláló + XP (minden 250 XP-nél egy kis dicséret) */
@@ -96,10 +96,10 @@
     if (cleanup) { cleanup(); cleanup = null; }
     const { parts, params } = parse();
     const page = parts[0] || 'home';
-    $$('[data-nav]').forEach((a) => a.classList.toggle('on', a.dataset.nav === page || (['lecke', 'sztori'].includes(page) && a.dataset.nav === 'leckek') || (['kviz', 'kartya', 'zh', 'parbaj', 'villam'].includes(page) && a.dataset.nav === 'gyakorlas') || (page === 'osszefoglalo' && a.dataset.nav === 'szamok')));
+    $$('[data-nav]').forEach((a) => a.classList.toggle('on', a.dataset.nav === page || (['lecke', 'sztori'].includes(page) && a.dataset.nav === 'leckek') || (['kviz', 'kartya', 'zh', 'parbaj', 'villam', 'grind'].includes(page) && a.dataset.nav === 'gyakorlas') || (page === 'osszefoglalo' && a.dataset.nav === 'szamok')));
     setTone(null);
     const views = { home: viewHome, leckek: viewLessons, lecke: () => viewLesson(parts[1]), gyakorlas: viewPractice, kviz: () => viewQuiz(params), zh: () => viewQuiz({ mode: 'zh' }), kartya: () => viewFlash(params), szamok: viewNumbers, sztori: () => viewStory(parts[1]),
-      most: viewCoach, parbaj: () => (parts[1] ? viewDuel(parts[1]) : viewDuelList()), villam: () => viewSwipe(params), osszefoglalo: viewSummary };
+      most: viewCoach, grind: () => viewGrind(params), parbaj: () => (parts[1] ? viewDuel(parts[1]) : viewDuelList()), villam: () => viewSwipe(params), osszefoglalo: viewSummary };
     (views[page] || viewHome)();
     window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
     app.querySelectorAll('.view').forEach((v) => { FX.words(v); FX.reveal(v); FX.rings(v); });
@@ -123,6 +123,7 @@
         <p class="lead reveal">Rövid, emberi nyelvű leckék és <b>${BANK.length} feleletválasztós kérdés</b>: a jogteszt.pdf mind a ${(window.JOG_TESZT || []).length} kérdése a mai jog szerint javítva, plusz a kurzus önellenőrző kérdései.</p>
         <div class="btn-row reveal">
           <a class="btn big-go" href="#/most">▶ Mit csináljak most?</a>
+          <a class="btn alt" href="#/grind">🔥 Grind</a>
           <a class="btn alt" href="#/lecke/${next.id}">${st.done ? 'Folytasd a leckét' : 'Kezdd az 1. leckével'} →</a>
         </div>
       </section>
@@ -461,15 +462,15 @@
   const PARBAJ = window.JOG_PARBAJ || [];
   const storyDone = (id) => !!S.story[id] || mastery(topicQs(id)) >= 70;
   function coachPick() {
-    if (BY_ID.z1 && !S.seen.z1) return { href: '#/kviz?mode=minta', ic: '⭐', c: '#ff375f', title: 'Valódi ZH-minta: 15 kérdés', why: 'Pont így néz ki a ZH: 15 kérdés, 3 válasz, 8 jó = kettes. Kezdd ezzel, minden válasz után magyarázattal.', perc: 5 };
-    const due = dueIds(), urgent = due.filter((id) => S.srs[id].b <= 1).length;
-    if (urgent >= 4 || due.length >= 12) return { href: '#/kviz?mode=most', ic: '🔁', c: '#ff375f', title: `Ismétlés: ${Math.min(Math.max(due.length, 10), 12)} kérdés`, why: 'Ezeket most kezded elfelejteni — ilyenkor a legolcsóbb visszahozni őket.', perc: 3 };
+    if (BY_ID.z1 && !S.seen.z1 && !Object.keys(S.g).length) return { href: '#/kviz?mode=minta', ic: '⭐', c: '#ff375f', title: 'Valódi ZH-minta: 15 kérdés', why: 'Pont így néz ki a ZH: 15 kérdés, 3 válasz, 8 jó = kettes. Kezdd ezzel, minden válasz után magyarázattal.', perc: 5 };
     const dz = zhDays();
     if (dz >= 0 && dz <= 1) {
-      return S.coachN % 2 === 0
-        ? { href: '#/zh', ic: '⏱️', c: '#ff9f0a', title: 'ZH-szimuláció: 15 kérdés, mint élesben', why: 'A ZH előtt ez hozza a legtöbbet: minden témából jön kérdés, és a hibáid pár perc múlva visszajönnek ismétlésre.', perc: 10 }
-        : { href: '#/villam', ic: '⚡', c: '#30d158', title: 'Igaz vagy hamis: 20 villámkártya', why: 'Kis lazítás a szimulációk között — közben ez is gyakorlás, minden témából.', perc: 3 };
+      if (S.coachN % 3 === 2) return { href: '#/zh', ic: '⏱️', c: '#ff9f0a', title: 'ZH-szimuláció: 15 kérdés, mint élesben', why: 'Főpróba: minden témából, időre, a végén jeggyel. Utána vissza a grindhoz.', perc: 10 };
+      const gs = gStats(GPOOL);
+      return { href: '#/grind?go=1', ic: '🔥', c: '#ff453a', title: `Grind: ${gs.n - gs.m} kérdés van hátra`, why: `Az összes kérdés az éles formában (3 válasz). Amit rontasz, visszajön; ami kétszer megy, kiesik. Becsült ZH-pontod most: ${fmt1(gEst())}.`, perc: 10 };
     }
+    const due = dueIds(), urgent = due.filter((id) => S.srs[id].b <= 1).length;
+    if (urgent >= 4 || due.length >= 12) return { href: '#/kviz?mode=most', ic: '🔁', c: '#ff375f', title: `Ismétlés: ${Math.min(Math.max(due.length, 10), 12)} kérdés`, why: 'Ezeket most kezded elfelejteni — ilyenkor a legolcsóbb visszahozni őket.', perc: 3 };
     const fresh = TEMAK.find((t) => L[t.id] && !storyDone(t.id));
     if (fresh) return { href: '#/sztori/' + fresh.id, ic: fresh.g, c: fresh.c, title: `${fresh.no}. lecke fókusz módban: ${fresh.short}`, why: Object.keys(S.story).length ? 'A következő lecke, amit még nem vettél át. Kártyánként, animálva, közben kérdésekkel.' : 'Kezdjük az elején: egy lecke kártyánként, animálva, közben kérdésekkel.', perc: L[fresh.id].perc };
     const weak = TEMAK.filter((t) => L[t.id]).map((t) => ({ t, m: mastery(topicQs(t.id)) })).sort((a, b) => a.m - b.m)[0];
@@ -497,7 +498,7 @@
         <div class="nc-body"><div class="nc-k">Most ezt · kb. ${p.perc} perc</div><div class="nc-t">${esc(p.title)}</div><div class="nc-why">${esc(p.why)}</div></div>
         <div class="nc-go" aria-hidden="true">▶</div></a>
       <div class="coach-alt reveal"><span>Inkább mást?</span>
-        <a class="chip" href="#/villam">⚡ Igaz/hamis</a><a class="chip" href="#/parbaj">⚔️ Párbaj</a><a class="chip" href="#/kviz?mode=most">🔁 Ismétlés (${due})</a><a class="chip" href="#/osszefoglalo">📄 Összefoglaló</a><a class="chip" href="#/zh">⏱️ ZH-szimuláció</a></div>
+        <a class="chip" href="#/grind">🔥 Grind</a><a class="chip" href="#/villam">⚡ Igaz/hamis</a><a class="chip" href="#/parbaj">⚔️ Párbaj</a><a class="chip" href="#/kviz?mode=most">🔁 Ismétlés (${due})</a><a class="chip" href="#/osszefoglalo">📄 Összefoglaló</a><a class="chip" href="#/zh">⏱️ ZH-szimuláció</a></div>
       <div class="grid grid-2 coach-stats">
         <div class="card reveal"><h3 class="h-card">Mai adag</h3>${FX.ring(Math.min(100, Math.round((todayN / goal) * 100)), `<span class="pct">${todayN}</span>`)}<p class="muted">válasz ma · cél: ${goal}</p></div>
         <div class="card reveal"><h3 class="h-card">Ismétlésre vár</h3><div class="big-n">${due}</div><p class="muted">A rossz válaszokat 2 perc múlva, a jókat egyre ritkábban hozza vissza.</p></div>
@@ -506,6 +507,184 @@
         <div class="tbars">${topics.map(({ t, m }) => `<a class="tbar reveal" href="#/kviz?t=${t.id}&n=10" style="--tc:${t.c}"><span class="tb-n">${t.g} ${esc(t.short)}${storyDone(t.id) ? '' : '<em>új</em>'}</span><span class="tb-track"><i style="--w:${m}%"></i></span><span class="tb-p">${m}%</span></a>`).join('')}</div></section>
     </div>`);
     $('#goNext', v).addEventListener('click', () => { S.coachN++; save(); });
+  }
+
+  /* ---------- Grind: az összes kérdés az éles formában (3 válasz, 1 jó), amíg mind „megy” ----------
+     S.g[id]: 0 = rontott, 1 = egyszer jó, 2 = megy (kétszer egymás után jó; elsőre eltalált kérdésnél a második
+     jó válasz ~25 kérdéssel később jön, hogy a szerencsés tipp ne számítson tudásnak). */
+  const GSELF = /^(mindkettő(re)?|egyik sem|mindegyik|a fentiek.*|fentiek.*)\.?$|\b[A-D] és [A-D]\b/i;
+  const GW = { alap: 2, alkotmany: 2, allamszerv: 2, birosag: 1, munka: 1, polgari1: 1, polgari2: 2, bunteto: 2, nemzetkozi: 1, kozig: 1, fogyaszto: 0.3 };
+  const GC = ['', '#ff453a', '#ff9f0a', '#0a84ff', '#30d158', '#bf5af2'], GRADE_W = ['', 'elégtelen', 'elégséges', 'közepes', 'jó', 'jeles'];
+  const fmt1 = (x) => x.toFixed(1).replace('.', ',');
+  const gGood = (q) => q.a.filter((k) => !GSELF.test(q.o[k]));
+  const gBad = (q) => q.o.map((_, k) => k).filter((k) => !q.a.includes(k) && !GSELF.test(q.o[k]));
+  /* a bank átalakítható, ismétlődés nélküli része */
+  const GPOOL = (() => {
+    const norm = (x) => x.toLowerCase().replace(/[^a-záéíóöőúüű0-9]/g, ''), seen = new Set();
+    return BANK.filter((q) => {
+      const key = norm(q.q) + '|' + q.a.map((k) => norm(q.o[k])).sort().join(',');
+      if (!gGood(q).length || !gBad(q).length || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  })();
+  const gText = (q) => q.q.replace(/\s*\(több jó válasz\)/gi, '').replace(/állítás\(ok\) igaz\(ak\)/gi, 'állítás igaz');
+  function gStats(pool) {
+    let m = 0, h = 0;
+    pool.forEach((q) => { const l = S.g[q.id]; if (l >= 2) m++; else if (l === 1) h++; });
+    return { m, h, n: pool.length };
+  }
+  /* becsült ZH-pont: amit tudsz, az pont; a többi 1/3 eséllyel tipp */
+  const gEst = () => { const { m, h, n } = gStats(GPOOL), k = n ? (m + h / 2) / n : 0; return 15 * (k + (1 - k) / 3); };
+  const gGrade = (e) => 1 + ZH_CUTS.filter((c) => e >= c).length;
+  /* sorrend: témák az éles ZH súlya szerint összefésülve, témán belül előbb a valódi ZH, aztán a rövid (alap) kérdések */
+  function gOrder(pool) {
+    const by = {}, out = [];
+    pool.forEach((q) => (by[q.t] = by[q.t] || []).push(q));
+    const len = (q) => q.q.length + Math.min(...gGood(q).map((k) => q.o[k].length));
+    Object.entries(by).forEach(([t, qs]) => {
+      qs.sort((a, b) => (b.src === 'zh') - (a.src === 'zh') || len(a) - len(b));
+      qs.forEach((q, i) => out.push({ q, key: (i + 0.5) / (GW[t] || 1) }));
+    });
+    const o = out.sort((a, b) => a.key - b.key).map((x) => x.q);
+    return [...o.filter((q) => S.g[q.id] === 0), ...o.filter((q) => S.g[q.id] === 1), ...o.filter((q) => S.g[q.id] === undefined)];
+  }
+  function viewGrind(p) {
+    const t0 = p.t && T[p.t] ? T[p.t] : null, pool = t0 ? GPOOL.filter((q) => q.t === t0.id) : GPOOL;
+    setTone(t0 ? t0.c : '#ff453a');
+    const home = '#/grind' + (t0 ? '?t=' + t0.id : '');
+    if (!p.go) {
+      const st = gStats(pool), e = gEst(), g = gGrade(e), pct = st.n ? Math.round((st.m / st.n) * 100) : 0;
+      const topics = TEMAK.map((t) => ({ t, ...gStats(GPOOL.filter((q) => q.t === t.id)) })).filter((x) => x.n);
+      mount(`<div class="wrap grind">
+        <section class="hero"><p class="eyebrow">Grind · ${t0 ? `${t0.g} ${esc(t0.short)} · ` : ''}${st.n} kérdés, az éles formában</p>
+          <h1 class="h-hero word-rise">Darálj, amíg <span class="grad-text">megy.</span></h1>
+          <p class="lead reveal">3 válasz, 1 jó — mint holnap. Amit rontasz, 3 kérdés múlva visszajön. Ami kétszer egymás után megy, az kiesik. Csak kattints: a jó válasz után magától lapoz.</p>
+          <div class="g-stats reveal">${FX.ring(pct, `<span class="pct">${pct}%</span>`, true)}
+            <div><div class="g-est">${fmt1(e)} <small>/ 15 pont</small></div><span class="g-grade" style="--gc:${GC[g]}">${g} · ${GRADE_W[g]}</span>
+            <div class="g-sub">Becsült ZH-pont a mostani tudásoddal (amit nem tudsz, azt 1/3 eséllyel tippelnéd).<br>Megy: <b>${st.m}</b> / ${st.n}${st.h ? ` · félig: ${st.h}` : ''}</div></div></div>
+          <div class="btn-row reveal"><a class="btn big-go" href="#/grind?go=1${t0 ? '&t=' + t0.id : ''}">🔥 ${st.m || st.h ? 'Folytatás' : 'Indulás'}</a>${t0 ? '<a class="btn alt" href="#/grind">Minden téma</a>' : ''}</div></section>
+        <section class="sec"><div class="sec-head"><h2 class="h-sec reveal">Csak egy téma?</h2></div>
+          <div class="tbars">${topics.map(({ t, m, n }) => `<a class="tbar reveal" href="#/grind?go=1&t=${t.id}" style="--tc:${t.c}"><span class="tb-n">${t.g} ${esc(t.short)}</span><span class="tb-track"><i style="--w:${Math.round((m / n) * 100)}%"></i></span><span class="tb-p">${m}/${n}</span></a>`).join('')}</div></section></div>`);
+      return;
+    }
+    const order = gOrder(pool), act = [], later = [];
+    let step = 0, cur = null, last = null, combo = 0, rN = 0, rOk = 0, rNew = 0, adv = null, roundOn = false, grade0 = gGrade(gEst());
+    const v = mount('<div class="quiz grind-run" id="gRoot"></div>'), root = $('#gRoot', v);
+    const inQ = (q) => act.some((x) => x.q === q) || later.some((x) => x.q === q);
+    const place = (x, list, due) => { [act, later].forEach((l) => { const i = l.indexOf(x); if (i >= 0) l.splice(i, 1); }); x.due = due; if (list) list.push(x); };
+    const pick = () => {
+      const all = [...act, ...later], cand = all.length > 1 ? all.filter((x) => x.q !== last) : all;
+      const due = cand.filter((x) => x.due <= step).sort((a, b) => a.due - b.due)[0];
+      if (due) return due;
+      if (act.length < 7) {
+        const q = order.find((q) => !(S.g[q.id] >= 2) && !inQ(q));
+        if (q) { const x = { q, due: step }; act.push(x); return x; }
+      }
+      return cand.sort((a, b) => a.due - b.due)[0] || null;
+    };
+    const bar = () => { const st = gStats(pool); return `<div class="qbar"><a class="x" href="${home}" aria-label="Kilépés">✕</a><div class="track"><i id="gTrack" style="width:${(st.m / st.n) * 100}%"></i></div><span class="streak" id="gCombo">${combo >= 3 ? '🔥 ' + combo : ''}</span><span class="cnt" id="gN">${st.m} / ${st.n} megy</span></div>`; };
+    const lvOf = (id) => (S.g[id] !== undefined ? S.g[id] : S.seen[id] && S.seen[id].last ? 1 : undefined);
+    function next() {
+      clearTimeout(adv);
+      roundOn = false;
+      cur = pick();
+      if (!cur) return allDone();
+      const q = cur.q, good = gGood(q), g = good[(Math.random() * good.length) | 0];
+      const opts = shuffle([g, ...shuffle(gBad(q)).slice(0, 2)]), t = T[q.t] || {}, lv = lvOf(q.id);
+      cur.view = { opts, right: opts.indexOf(g), g, done: false };
+      root.innerHTML = `${bar()}<div class="qcard" style="--tc:${t.c || 'var(--accent)'}">
+        <div class="qmeta"><span class="tag">${t.g || ''} ${esc(t.short || '')}</span>${lv === 0 ? '<span class="tag multi">🔁 Visszajött</span>' : lv === 1 ? '<span class="tag grey">Még egyszer, és megy</span>' : '<span class="tag grey">Új</span>'}${q.src === 'zh' ? '<span class="tag grey">⭐ Valódi ZH</span>' : ''}<span class="tag grey">≈ ${fmt1(gEst())} pont</span></div>
+        <h2 class="qtext">${esc(gText(q))}</h2>
+        <div class="opts">${opts.map((k, j) => `<button class="opt" data-j="${j}"><span class="L">${LETTERS[j]}</span><span>${esc(q.o[k])}</span></button>`).join('')}</div>
+        <div id="fbSlot"></div>
+        <div class="qfoot"><span class="hint">1–3 vagy A–C · a jó válasz után magától lapoz</span><button class="btn sm" id="gGo" style="visibility:hidden">Tovább →</button></div></div>`;
+      $$('.opt', root).forEach((b) => b.addEventListener('click', () => answer(+b.dataset.j)));
+      $('#gGo', root).addEventListener('click', go);
+      last = q;
+    }
+    function answer(j) {
+      const V = cur && cur.view;
+      if (!V || V.done) return;
+      V.done = true;
+      const q = cur.q, ok = j === V.right, lv = lvOf(q.id);
+      record(q.id, ok);
+      rN++; step++;
+      $$('.opt', root).forEach((b, k) => { b.disabled = true; b.classList.add(k === V.right ? (k === j ? 'ok' : 'miss') : k === j ? 'no' : 'dim'); });
+      if (ok) {
+        rOk++; combo++;
+        if (lv === 1) { S.g[q.id] = 2; place(cur, null); rNew++; plus(); }
+        else if (lv === undefined) { S.g[q.id] = 1; place(cur, later, step + 25); }
+        else { S.g[q.id] = 1; place(cur, act, step + 7); }
+        if (combo % 10 === 0) FX.toast(`🔥 ${combo} egymás után!`);
+        adv = setTimeout(go, 650);
+      } else {
+        combo = 0;
+        S.g[q.id] = 0;
+        place(cur, act, step + 3);
+        const others = gGood(q).filter((k) => k !== V.g);
+        $('#fbSlot', root).innerHTML = `<div class="fb no"><div class="h">✕ A jó: ${esc(q.o[V.g])}</div>${q.x ? `<p>${esc(q.x)}</p>` : ''}${others.length ? `<p style="margin-top:6px"><b>Ez is jó lett volna:</b> ${others.map((k) => esc(q.o[k])).join(' · ')}</p>` : ''}${q.old ? `<div class="old">${oldNote(q.old)}</div>` : ''}</div>`;
+        const b = $('#gGo', root);
+        b.style.visibility = 'visible';
+        b.focus({ preventScroll: true });
+      }
+      save();
+      const st = gStats(pool);
+      $('#gN', root).textContent = `${st.m} / ${st.n} megy`;
+      $('#gTrack', root).style.width = (st.m / st.n) * 100 + '%';
+      $('#gCombo', root).textContent = combo >= 3 ? '🔥 ' + combo : '';
+      const g = gGrade(gEst());
+      if (g > grade0) { grade0 = g; FX.confetti(200); FX.toast(g === 2 ? '🎉 Átlépted a 8 pontot — ezzel már átmennél!' : `🎉 Becsült jegyed: ${g} · ${GRADE_W[g]}!`); }
+    }
+    function plus() {
+      const n = $('#gN', root);
+      if (!n) return;
+      const e = document.createElement('span');
+      e.className = 'g-plus';
+      e.textContent = '+1 ✓';
+      n.appendChild(e);
+      setTimeout(() => e.remove(), 950);
+    }
+    function go() {
+      clearTimeout(adv);
+      if (rN && rN % 20 === 0 && !roundOn) return roundScreen();
+      next();
+    }
+    function roundScreen() {
+      roundOn = true;
+      const st = gStats(pool), e = gEst(), g = gGrade(e);
+      if (rOk >= 16) FX.confetti(150);
+      root.innerHTML = `${bar()}<div class="qcard g-round"><p class="eyebrow">${rN / 20}. kör kész · ${rOk} / 20 jó</p>
+        ${FX.ring(Math.round((rOk / 20) * 100), `<span class="pct">${rOk}/20</span>`)}
+        <div class="g-est">${fmt1(e)} <small>/ 15 pont</small></div><span class="g-grade" style="--gc:${GC[g]}">${g} · ${GRADE_W[g]}</span>
+        <p class="g-sub">Ebben a körben <b>+${rNew}</b> kérdés lett „megy”. Összesen ${st.m} / ${st.n}.</p>
+        <p class="muted">Igyál egy kortyot, nyújtózz egyet. Aztán jöhet a következő 20.</p>
+        <div class="btn-row"><button class="btn big-go" id="gNext">Következő kör ▶</button><a class="btn alt" href="${home}">Szünet</a></div></div>`;
+      FX.rings(root);
+      $('#gNext', root).addEventListener('click', next);
+      rOk = 0; rNew = 0;
+    }
+    function allDone() {
+      roundOn = true;
+      FX.confetti(220);
+      root.innerHTML = `${bar()}<div class="qcard g-round"><div class="s-emoji">🏆</div><h2 class="qtext">${t0 ? `${t0.g} ${esc(t0.short)}: minden` : 'Minden'} kérdés megy!</h2>
+        <div class="g-est">${fmt1(gEst())} <small>/ 15 pont</small></div>
+        <p class="muted">Reggel egy gyors átismétlés: mindegyik kérdés még egyszer, egy jó válasz elég.</p>
+        <div class="btn-row"><button class="btn big-go" id="gRe">🔁 Átismétlés</button><a class="btn alt" href="#/zh">⏱️ ZH-szimuláció</a></div></div>`;
+      $('#gRe', root).addEventListener('click', () => { pool.forEach((q) => { if (S.g[q.id] >= 2) S.g[q.id] = 1; }); save(); route(); });
+    }
+    const onKey = (e) => {
+      if (e.metaKey || e.ctrlKey || e.altKey || e.key.length > 1 && !['Enter', 'ArrowRight'].includes(e.key)) return;
+      if (roundOn) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); const b = $('#gNext, #gRe', root); if (b) b.click(); } return; }
+      const V = cur && cur.view;
+      if (!V) return;
+      const k = e.key.length === 1 ? Math.max('123'.indexOf(e.key), 'abc'.indexOf(e.key.toLowerCase())) : -1;
+      if (!V.done && k >= 0 && k < V.opts.length) { e.preventDefault(); answer(k); }
+      else if (V.done && (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowRight')) { e.preventDefault(); go(); }
+    };
+    document.addEventListener('keydown', onKey);
+    cleanup = () => { document.removeEventListener('keydown', onKey); clearTimeout(adv); };
+    next();
   }
 
   /* ---------- Párbaj: összekeverhető fogalompárok ---------- */
@@ -697,6 +876,7 @@
     const tile = (href, ic, mc, t, d, n) => `<a class="mode reveal" href="${href}" style="--mc:${mc}"><div class="ic">${ic}</div><div class="t">${t}</div><div class="d">${d}</div><div class="n">${n}</div></a>`;
     return `<div class="grid grid-3">
       ${tile('#/sztori/' + TEMAK[0].id, '▶️', '#bf5af2', 'Fókusz mód', 'A leckék sztoriként: egyszerre egy kártya, a pontok egyenként jönnek elő, közben gyors kérdések.', 'ADHD-barát')}
+      ${tile('#/grind', '🔥', '#ff453a', 'Grind — az összes kérdés', '3 válasz, 1 jó, mint élesben. Amit rontasz, visszajön; ami kétszer egymás után megy, kiesik. Közben mutatja a becsült ZH-pontodat.', `${gStats(GPOOL).m} / ${GPOOL.length} megy`)}
       ${tile('#/most', '🧭', '#ff375f', 'Mit csináljak most?', 'Nem kell döntened: a válaszaid alapján megmondja a legjobb következő 5 percet.', 'Edző')}
       ${tile('#/parbaj', '⚔️', '#ff9f0a', 'Párbaj', `Összekeverhető párok (semmis vs. megtámadható, foglaló vs. előleg…). Húzd a jó oldalra!`, `${PARBAJ.length} pár`)}
       ${tile('#/villam', '⚡', '#30d158', 'Igaz vagy hamis?', 'Villámgyors lapozás: jó válasz ez a kérdésre? Jobbra igen, balra nem.', '20 kártya / kör')}

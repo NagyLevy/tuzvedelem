@@ -83,6 +83,7 @@ window.JOG_LECKEK = (window.JOG_LECKEK || []).concat([{
 | `#/gyakorlas` | módválasztó (forrás: mind / jogteszt / kurzus) |
 | `#/kviz?mode=mix\|hibak\|teszt&t=<téma>&src=` | kvíz azonnali visszajelzéssel, magyarázattal és „Nem érted? → lecke” linkkel |
 | `#/zh` | ZH-szimuláció az éles formátumban: 15 kérdés témakvóta szerint (`QUOTA`), 3 válasz (a jó + 2 véletlen rossz), 20 perc, visszajelzés nélkül, jegy az éles ponthatárral (`ZH_CUTS`: 8/10/12/14 pont) |
+| `#/grind`, `#/grind?go=1&t=` | **🔥 Grind** — a fő gyakorló mód a ZH előtt. A bank ismétlődés nélküli, átalakítható része (`GPOOL`, ~383 kérdés) az éles formában: 3 válasz (a jó + 2 véletlen rossz; többválaszosnál véletlenül választott jó, a többi „Ez is jó lett volna”). Sorrend (`gOrder`): témák a ZH-súly (`GW`) szerint összefésülve, témán belül előbb a valódi ZH, aztán a rövid kérdések. 7 kérdéses aktív halmaz: rossz → 3 kérdés múlva vissza; jó egyszer → 7 múlva; elsőre jó → 25 múlva megerősítés; kétszer egymás után jó → „megy” (`S.g[id]` 0/1/2). Jó válasz után magától lapoz, 20-anként körzáró, becsült ZH-pont: 15·(k + (1−k)/3). |
 | `#/kviz?mode=minta` | ⭐ Valódi ZH-minta: egy korábbi éles ZH 15 kérdése (`data/zhminta.js`, `JOG_ZHMINTA`, id `z1…z15`, `src: 'zh'`), azonnali magyarázattal. Az edző ezzel kezd. |
 | `#/kartya?t=` | villámkártyák (Szóköz = fordít, ← nem tudtam, → tudtam) |
 | `#/szamok` | az összes szám témánként + 🪜 évszám-létra (megbízatási idők, rigmussal) |
