@@ -28,16 +28,44 @@
   /* ---------- Haladás ---------- */
   const KEY = 'jog.v1';
   const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } };
-  const S = Object.assign({ seen: {}, wrong: [], best: 0, flash: {} }, load());
+  const S = Object.assign({ seen: {}, wrong: [], best: 0, flash: {}, srs: {}, xp: 0, days: {}, story: {}, pb: {}, coachN: 0 }, load());
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* privát mód: nem baj */ } };
+  const today = () => new Date().toLocaleDateString('sv'); // ÉÉÉÉ-HH-NN, helyi idő
+  /* napi számláló + XP (minden 250 XP-nél egy kis dicséret) */
+  const bump = (ok, xp) => {
+    S.days[today()] = (S.days[today()] || 0) + 1;
+    if (!ok) return;
+    const before = S.xp;
+    S.xp += xp;
+    if (Math.floor(S.xp / 250) > Math.floor(before / 250)) setTimeout(() => FX.toast(`⚡ ${S.xp} XP — így tovább!`), 500);
+  };
+  /* Ismétlés a felejtés pillanatában: rossz válasz → 2 perc múlva újra; jó → egyre ritkábban
+     (10 perc, 1 óra, 5 óra, 1 nap, 3 nap). Az elsőre eltalált kérdés rögtön az 1 órás fokra kerül. */
+  const IV = [2, 10, 60, 300, 1440, 4320].map((m) => m * 60000);
   const record = (id, ok) => {
     const s = S.seen[id] || (S.seen[id] = { ok: 0, bad: 0 });
+    const first = !s.ok && !s.bad;
     ok ? s.ok++ : s.bad++;
     s.last = ok ? 1 : 0;
     const i = S.wrong.indexOf(id);
     if (ok && i >= 0) S.wrong.splice(i, 1);
     if (!ok && i < 0) S.wrong.push(id);
+    const r = S.srs[id] || { b: 0 };
+    r.b = !ok ? 0 : first ? 2 : Math.min(r.b + 1, IV.length - 1);
+    r.due = Date.now() + IV[r.b];
+    S.srs[id] = r;
+    bump(ok, 10);
     save();
+  };
+  /* a korábbi (ismétlési rendszer előtti) hibák azonnal esedékesek */
+  S.wrong.forEach((id) => { if (!S.srs[id]) S.srs[id] = { b: 0, due: 0 }; });
+  const dueIds = () => { const now = Date.now(); return Object.keys(S.srs).filter((id) => BY_ID[id] && S.srs[id].due <= now).sort((a, b) => S.srs[a].due - S.srs[b].due); };
+  const dayStreak = () => {
+    const d = new Date();
+    if (!S.days[today()]) d.setDate(d.getDate() - 1);
+    let n = 0;
+    while (S.days[d.toLocaleDateString('sv')]) { n++; d.setDate(d.getDate() - 1); }
+    return n;
   };
   const topicQs = (t) => BANK.filter((q) => q.t === t);
   const mastery = (qs) => (qs.length ? Math.round((qs.filter((q) => S.seen[q.id] && S.seen[q.id].last).length / qs.length) * 100) : 0);
@@ -63,9 +91,10 @@
     if (cleanup) { cleanup(); cleanup = null; }
     const { parts, params } = parse();
     const page = parts[0] || 'home';
-    $$('[data-nav]').forEach((a) => a.classList.toggle('on', a.dataset.nav === page || (['lecke', 'sztori'].includes(page) && a.dataset.nav === 'leckek') || (['kviz', 'kartya', 'zh'].includes(page) && a.dataset.nav === 'gyakorlas')));
+    $$('[data-nav]').forEach((a) => a.classList.toggle('on', a.dataset.nav === page || (['lecke', 'sztori'].includes(page) && a.dataset.nav === 'leckek') || (['kviz', 'kartya', 'zh', 'parbaj', 'villam'].includes(page) && a.dataset.nav === 'gyakorlas') || (page === 'osszefoglalo' && a.dataset.nav === 'szamok')));
     setTone(null);
-    const views = { home: viewHome, leckek: viewLessons, lecke: () => viewLesson(parts[1]), gyakorlas: viewPractice, kviz: () => viewQuiz(params), zh: () => viewQuiz({ mode: 'zh' }), kartya: () => viewFlash(params), szamok: viewNumbers, sztori: () => viewStory(parts[1]) };
+    const views = { home: viewHome, leckek: viewLessons, lecke: () => viewLesson(parts[1]), gyakorlas: viewPractice, kviz: () => viewQuiz(params), zh: () => viewQuiz({ mode: 'zh' }), kartya: () => viewFlash(params), szamok: viewNumbers, sztori: () => viewStory(parts[1]),
+      most: viewCoach, parbaj: () => (parts[1] ? viewDuel(parts[1]) : viewDuelList()), villam: () => viewSwipe(params), osszefoglalo: viewSummary };
     (views[page] || viewHome)();
     window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
     app.querySelectorAll('.view').forEach((v) => { FX.words(v); FX.reveal(v); FX.rings(v); });
@@ -88,8 +117,8 @@
         <h1 class="h-hero word-rise">Holnap <span class="grad-text">ZH.</span> Ma megtanulod.</h1>
         <p class="lead reveal">Rövid, emberi nyelvű leckék és <b>${BANK.length} feleletválasztós kérdés</b>: a jogteszt.pdf mind a ${(window.JOG_TESZT || []).length} kérdése a mai jog szerint javítva, plusz a kurzus önellenőrző kérdései.</p>
         <div class="btn-row reveal">
-          <a class="btn" href="#/lecke/${next.id}">${st.done ? 'Folytasd' : 'Kezdd az 1. leckével'} →</a>
-          <a class="btn alt" href="#/kviz?mode=mix">Vegyes kvíz</a>
+          <a class="btn big-go" href="#/most">▶ Mit csináljak most?</a>
+          <a class="btn alt" href="#/lecke/${next.id}">${st.done ? 'Folytasd a leckét' : 'Kezdd az 1. leckével'} →</a>
         </div>
       </section>
       <div class="stats">
@@ -180,7 +209,7 @@
       <div class="anim-cap"><span class="n"></span><p></p></div><div class="anim-bar"><i></i></div>
       <div class="anim-stage t-${a.tipus || 'lanc'}">${a.lepesek.map(step).join('')}</div></div>`;
   }
-  function animPlayer(el, a) {
+  function animPlayer(el, a, onCap) {
     const sts = $$('.st', el), n = sts.length, cap = $('.anim-cap p', el), num = $('.anim-cap .n', el), bar = $('.anim-bar i', el), btn = $('.play', el);
     let i = -1, timer = null;
     const show = (k) => {
@@ -189,11 +218,12 @@
       cap.classList.remove('fade'); void cap.offsetWidth; cap.classList.add('fade');
       cap.innerHTML = k < 0 ? (a.intro || 'Nyomd meg a ▶ gombot.') : a.lepesek[k].c;
       num.textContent = k < 0 ? '' : `${k + 1}/${n}`;
+      if (onCap && k >= 0) onCap(a.lepesek[k].c);
       bar.style.width = ((k + 1) / n) * 100 + '%';
     };
     const stop = () => { clearTimeout(timer); timer = null; btn.textContent = '▶'; };
     /* olvasási idő a narráció hosszából (kb. 15 karakter / mp), 2,6 és 7 mp között */
-    const wait = (k) => Math.min(7000, Math.max(2600, (a.lepesek[k].c || '').replace(/<[^>]+>/g, '').length * 65));
+    const wait = (k) => { const sp = onCap && TTS.on; return Math.min(sp ? 11000 : 7000, Math.max(2600, (a.lepesek[k].c || '').replace(/<[^>]+>/g, '').length * (sp ? 82 : 65))); };
     const tick = () => { if (i >= n - 1) return stop(); show(i + 1); timer = setTimeout(tick, wait(i)); };
     const play = () => { if (i >= n - 1) show(-1); btn.textContent = '❚❚'; timer = setTimeout(tick, 350); };
     btn.addEventListener('click', () => (timer ? stop() : play()));
@@ -221,6 +251,8 @@
     const t = T[id], l = L[id], anims = ANIM[id] || [];
     const qs = shuffle(topicQs(id).filter((q) => q.a.length === 1 && q.o.length <= 5 && q.o.join('').length < 420));
     const slides = [{ kind: 'intro' }];
+    /* „előbb kérdez”: egy tipp-kérdés még a tanulás előtt — a rossz tipp utáni „aha” jobban megmarad */
+    if (qs.length > 3) slides.push({ kind: 'q', q: qs.shift(), pre: true });
     anims.forEach((a) => slides.push({ kind: 'anim', a }));
     l.kartyak.forEach((k, i) => {
       slides.push({ kind: 'card', k });
@@ -243,10 +275,10 @@
       case 'traps': return `<div class="s-card"><div class="k">Itt szoktak elcsúszni</div><h2>⚠️ Csapdák</h2><div class="s-traps">${l.csapdak.map((c) => `<div class="beat trap"><i>!</i><div>${c}</div></div>`).join('')}</div></div>`;
       case 'q': {
         const order = shuffle(sl.q.o.map((_, i) => i));
-        return `<div class="s-card s-q"><div class="k">Gyors kérdés</div><h2>${esc(sl.q.q)}</h2><div class="s-opts">${order.map((i) => `<button class="s-opt" data-i="${i}">${esc(sl.q.o[i])}</button>`).join('')}</div><div class="s-fb"></div></div>`;
+        return `<div class="s-card s-q"><div class="k">${sl.pre ? 'Tippelj! Nem baj, ha még nem tudod' : 'Gyors kérdés'}</div><h2>${esc(sl.q.q)}</h2><div class="s-opts">${order.map((i) => `<button class="s-opt" data-i="${i}">${esc(sl.q.o[i])}</button>`).join('')}</div><div class="s-fb"></div></div>`;
       }
       default: return `<div class="s-intro"><div class="s-emoji">🎉</div><h1>Kész a lecke!</h1><p class="lead">Most rögzítsd: nézd át a kérdéslistát, vagy gyakorold a témát.</p>
-        <div class="btn-row"><a class="btn tc" href="#/kviz?t=${t.id}">Téma-kvíz</a><a class="btn alt" href="#/lecke/${t.id}">📋 Mit kérdeznek?</a>${nextT ? `<a class="btn alt" href="#/sztori/${nextT.id}">Következő: ${esc(nextT.short)} ▶</a>` : ''}</div></div>`;
+        <div class="btn-row"><a class="btn tc" href="#/most">▶ Mit csináljak most?</a><a class="btn alt" href="#/kviz?t=${t.id}&n=10">Téma-kvíz</a><a class="btn alt" href="#/lecke/${t.id}">📋 Mit kérdeznek?</a>${nextT ? `<a class="btn alt" href="#/sztori/${nextT.id}">Következő: ${esc(nextT.short)} ▶</a>` : ''}</div></div>`;
     }
   }
   /* a számok „felpörögnek”: a szöveg elején álló számot 0-ról animálja, az utótagot megtartja */
@@ -270,16 +302,27 @@
     v.style.setProperty('--tc', t.c);
     v.innerHTML = (`
       <div class="s-top"><div class="s-segs">${slides.map(() => '<span><i></i></span>').join('')}</div>
-        <div class="s-bar"><span>${t.g} ${esc(t.short)}</span><a class="s-x" href="#/lecke/${id}" aria-label="Bezárás">✕</a></div></div>
+        <div class="s-bar"><span>${t.g} ${esc(t.short)}</span><span class="s-tools">${ttsBtn('s-x')}<a class="s-x" href="#/lecke/${id}" aria-label="Bezárás">✕</a></span></div></div>
       <div class="s-stage" id="sStage"></div>
       <div class="s-bot"><button class="btn alt s-prev" aria-label="Vissza">‹</button><span class="s-hint">Koppints bárhová · <span class="kbd">Szóköz</span></span><button class="btn tc s-next">Tovább ›</button></div>`);
     document.body.appendChild(v);
     const stage = $('#sStage', v), segs = $$('.s-segs i', v), nextBtn = $('.s-next', v);
-    let si = 0, bi = 0, beats = [], stopAnim = null, answered = false;
+    let si = 0, bi = 0, beats = [], stopAnim = null, answered = false, spoken = null;
+    /* hangos mód: a dia címe, aztán minden új ütem */
+    const speakSlide = () => {
+      const sl = slides[si];
+      if (!TTS.on || sl.kind === 'anim') return;
+      const h = $('.s-slide h1, .s-slide h2', stage);
+      let txt = h ? h.textContent : '';
+      if (sl.kind === 'intro' && beats[0]) { txt += '. ' + beats[0].textContent; spoken = beats[0]; }
+      if (sl.kind === 'q') txt += '. ' + $$('.s-opt', stage).map((o) => o.textContent).join('. Vagy: ');
+      TTS.say(txt);
+    };
     const paint = () => {
       segs.forEach((g, i) => (g.style.width = i < si ? '100%' : i > si ? '0%' : `${beats.length ? Math.round(((bi + 1) / (beats.length + 1)) * 100) : 100}%`));
       beats.forEach((b, i) => { b.classList.toggle('on', i <= bi - 1); b.classList.toggle('now', i === bi - 1); });
       const cur = beats[bi - 1];
+      if (cur && cur !== spoken) { spoken = cur; TTS.say(cur.innerHTML); }
       if (cur) {
         const num = cur.querySelector('.v');
         if (num && !cur.dataset.done) { cur.dataset.done = 1; countUp(num); }
@@ -303,11 +346,13 @@
         fromBody.forEach((b) => b.classList.add('beat'));
         beats = [...fromBody, ...beats];
       }
-      if (sl.kind === 'anim') stopAnim = animPlayer($('.anim', stage), sl.a);
+      if (sl.kind === 'anim') stopAnim = animPlayer($('.anim', stage), sl.a, (c) => TTS.say(c));
       if (sl.kind === 'q') bindQ(sl.q);
-      if (sl.kind === 'end') FX.confetti(160);
+      if (sl.kind === 'end') { FX.confetti(160); S.story[id] = Date.now(); save(); }
       bi = atEnd ? beats.length : sl.kind === 'intro' ? 1 : 0;
+      spoken = sl.kind === 'intro' ? beats[0] : atEnd ? beats[beats.length - 1] : null;
       paint();
+      speakSlide();
     };
     const bindQ = (q) => {
       $$('.s-opt', stage).forEach((b) => b.addEventListener('click', (e) => {
@@ -342,8 +387,296 @@
     };
     document.addEventListener('keydown', onKey);
     document.documentElement.classList.add('story-open');
-    cleanup = () => { document.removeEventListener('keydown', onKey); document.documentElement.classList.remove('story-open'); if (stopAnim) stopAnim(); v.remove(); };
+    bindTts(v, speakSlide);
+    cleanup = () => { document.removeEventListener('keydown', onKey); document.documentElement.classList.remove('story-open'); if (stopAnim) stopAnim(); TTS.stop(); v.remove(); };
     render(1);
+  }
+
+  /* ---------- Hangos mód: a böngésző beépített (magyar) felolvasója ---------- */
+  const TTS = {
+    ok: 'speechSynthesis' in window,
+    on: (() => { try { return localStorage.getItem('jog.tts') === '1'; } catch (e) { return false; } })(),
+    set(v) { this.on = v; try { localStorage.setItem('jog.tts', v ? '1' : '0'); } catch (e) { /* nincs tárhely */ } if (!v) this.stop(); },
+    stop() { if (this.ok) speechSynthesis.cancel(); },
+    say(html) {
+      if (!this.on || !this.ok) return;
+      const txt = String(html).replace(/<[^>]+>/g, ' ').replace(/[→←·•|]/g, ', ').replace(/\s+/g, ' ').trim();
+      if (!txt) return;
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(txt);
+      u.lang = 'hu-HU';
+      u.rate = 1.05;
+      const hu = speechSynthesis.getVoices().find((x) => /^hu/i.test(x.lang));
+      if (hu) u.voice = hu;
+      speechSynthesis.speak(u);
+    },
+  };
+  const ttsBtn = (cls) => (TTS.ok ? `<button class="${cls || 'x'} tts-btn${TTS.on ? ' on' : ''}" aria-label="Hangos mód" title="Hangos mód: felolvassa a szöveget">🔊</button>` : '');
+  const bindTts = (root, onOn) => {
+    const b = $('.tts-btn', root);
+    if (b) b.addEventListener('click', (e) => { e.stopPropagation(); TTS.set(!TTS.on); b.classList.toggle('on', TTS.on); if (TTS.on && onOn) onOn(); });
+  };
+
+  /* Húzás balra / jobbra (egér és érintés): onPick('a') = bal, onPick('b') = jobb */
+  function swipe(card, onPick) {
+    let x0 = null, dx = 0;
+    const set = (x, anim) => {
+      card.style.transition = anim ? '' : 'none';
+      card.style.transform = x ? `translateX(${x}px) rotate(${x / 18}deg)` : '';
+      card.dataset.lean = x < -40 ? 'a' : x > 40 ? 'b' : '';
+    };
+    card.addEventListener('pointerdown', (e) => {
+      if (e.button > 0 || e.target.closest('button, a')) return;
+      x0 = e.clientX; dx = 0;
+      card.setPointerCapture(e.pointerId);
+    });
+    card.addEventListener('pointermove', (e) => { if (x0 !== null) { dx = e.clientX - x0; set(dx); } });
+    const end = () => {
+      if (x0 === null) return;
+      x0 = null;
+      if (Math.abs(dx) > Math.min(110, card.offsetWidth * 0.28)) onPick(dx < 0 ? 'a' : 'b');
+      else set(0, true);
+    };
+    card.addEventListener('pointerup', end);
+    card.addEventListener('pointercancel', end);
+  }
+  /* ←/→ billentyű; várakozáskor Enter / Szóköz is továbbvisz */
+  const arrowKeys = (onLeft, onRight, onGo) => {
+    const f = (e) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key === 'ArrowLeft') { e.preventDefault(); onLeft(); }
+      else if (e.key === 'ArrowRight') { e.preventDefault(); onRight(); }
+      else if ((e.key === 'Enter' || e.key === ' ') && onGo) { e.preventDefault(); onGo(); }
+    };
+    document.addEventListener('keydown', f);
+    cleanup = () => { document.removeEventListener('keydown', f); TTS.stop(); };
+  };
+
+  /* ---------- „Mit csináljak most?” — egyetlen javaslat, döntés nélkül ---------- */
+  const PARBAJ = window.JOG_PARBAJ || [];
+  const storyDone = (id) => !!S.story[id] || mastery(topicQs(id)) >= 70;
+  function coachPick() {
+    const due = dueIds(), urgent = due.filter((id) => S.srs[id].b <= 1).length;
+    if (urgent >= 4 || due.length >= 12) return { href: '#/kviz?mode=most', ic: '🔁', c: '#ff375f', title: `Ismétlés: ${Math.min(Math.max(due.length, 10), 12)} kérdés`, why: 'Ezeket most kezded elfelejteni — ilyenkor a legolcsóbb visszahozni őket.', perc: 3 };
+    const fresh = TEMAK.find((t) => L[t.id] && !storyDone(t.id));
+    if (fresh) return { href: '#/sztori/' + fresh.id, ic: fresh.g, c: fresh.c, title: `${fresh.no}. lecke fókusz módban: ${fresh.short}`, why: Object.keys(S.story).length ? 'A következő lecke, amit még nem vettél át. Kártyánként, animálva, közben kérdésekkel.' : 'Kezdjük az elején: egy lecke kártyánként, animálva, közben kérdésekkel.', perc: L[fresh.id].perc };
+    const weak = TEMAK.filter((t) => L[t.id]).map((t) => ({ t, m: mastery(topicQs(t.id)) })).sort((a, b) => a.m - b.m)[0];
+    if (weak.m >= 85) return { href: '#/zh', ic: '⏱️', c: '#ff9f0a', title: 'ZH-szimuláció', why: 'Minden témád 85% felett van — jöhet a főpróba.', perc: 30 };
+    const t = weak.t, why = `Ez most a leggyengébb témád (${weak.m}%). Váltogatjuk a formát, hogy ne und meg.`;
+    const kind = S.coachN % 3, pbs = PARBAJ.filter((x) => x.t === t.id);
+    if (kind === 1 && pbs.length) {
+      const x = pbs.slice().sort((a, b) => (S.pb[a.id] || 0) - (S.pb[b.id] || 0))[0];
+      return { href: '#/parbaj/' + x.id, ic: '⚔️', c: t.c, title: `Párbaj: ${x.a[0]} vs. ${x.b[0]}`, why, perc: 2 };
+    }
+    if (kind === 2) return { href: '#/villam?t=' + t.id, ic: '⚡', c: t.c, title: `Igaz vagy hamis: ${t.short}`, why, perc: 2 };
+    return { href: `#/kviz?t=${t.id}&n=10`, ic: t.g, c: t.c, title: `10 kérdés: ${t.short}`, why, perc: 5 };
+  }
+  function viewCoach() {
+    const p = coachPick(), due = dueIds().length, todayN = S.days[today()] || 0, goal = 100;
+    const days = Math.round((new Date(2026, 10, 26) - new Date(new Date().toDateString())) / 864e5);
+    const zh = days > 1 ? `${days} nap múlva ZH` : days === 1 ? 'Holnap ZH' : days === 0 ? 'Ma ZH — hajrá!' : 'A ZH után';
+    const topics = TEMAK.filter((t) => L[t.id]).map((t) => ({ t, m: mastery(topicQs(t.id)) })).sort((a, b) => a.m - b.m);
+    const v = mount(`<div class="wrap coach">
+      <section class="hero"><p class="eyebrow">${zh} · 🔥 ${dayStreak()} napos sorozat · ⚡ ${S.xp} XP</p>
+        <h1 class="h-hero word-rise">Mit csináljak <span class="grad-text">most?</span></h1>
+        <p class="lead reveal">Nem kell döntened. Ez a legjobb következő lépés a válaszaid alapján — ha kész, gyere vissza ide.</p></section>
+      <a class="next-card" href="${p.href}" id="goNext" style="--tc:${p.c}">
+        <div class="nc-ic">${p.ic}</div>
+        <div class="nc-body"><div class="nc-k">Most ezt · kb. ${p.perc} perc</div><div class="nc-t">${esc(p.title)}</div><div class="nc-why">${esc(p.why)}</div></div>
+        <div class="nc-go" aria-hidden="true">▶</div></a>
+      <div class="coach-alt reveal"><span>Inkább mást?</span>
+        <a class="chip" href="#/villam">⚡ Igaz/hamis</a><a class="chip" href="#/parbaj">⚔️ Párbaj</a><a class="chip" href="#/kviz?mode=most">🔁 Ismétlés (${due})</a><a class="chip" href="#/osszefoglalo">📄 Összefoglaló</a><a class="chip" href="#/zh">⏱️ ZH-szimuláció</a></div>
+      <div class="grid grid-2 coach-stats">
+        <div class="card reveal"><h3 class="h-card">Mai adag</h3>${FX.ring(Math.min(100, Math.round((todayN / goal) * 100)), `<span class="pct">${todayN}</span>`)}<p class="muted">válasz ma · cél: ${goal}</p></div>
+        <div class="card reveal"><h3 class="h-card">Ismétlésre vár</h3><div class="big-n">${due}</div><p class="muted">A rossz válaszokat 2 perc múlva, a jókat egyre ritkábban hozza vissza.</p></div>
+      </div>
+      <section class="sec"><div class="sec-head"><h2 class="h-sec reveal">Témáid, a leggyengébbtől</h2><p class="lead reveal">Koppints egy témára: 10 kérdés belőle.</p></div>
+        <div class="tbars">${topics.map(({ t, m }) => `<a class="tbar reveal" href="#/kviz?t=${t.id}&n=10" style="--tc:${t.c}"><span class="tb-n">${t.g} ${esc(t.short)}${storyDone(t.id) ? '' : '<em>új</em>'}</span><span class="tb-track"><i style="--w:${m}%"></i></span><span class="tb-p">${m}%</span></a>`).join('')}</div></section>
+    </div>`);
+    $('#goNext', v).addEventListener('click', () => { S.coachN++; save(); });
+  }
+
+  /* ---------- Párbaj: összekeverhető fogalompárok ---------- */
+  function viewDuelList() {
+    const groups = TEMAK.map((t) => ({ t, ps: PARBAJ.filter((x) => x.t === t.id) })).filter((g) => g.ps.length);
+    mount(`<div class="wrap"><section class="hero"><p class="eyebrow">Párbaj · ${PARBAJ.length} fogalompár</p>
+      <h1 class="h-hero word-rise">Ne keverd <span class="grad-text">össze.</span></h1>
+      <p class="lead reveal">A ZH-n nem az a nehéz, hogy mi a kötbér, hanem hogy kötbér, foglaló vagy előleg. Húzd az állítást a jó oldalra (vagy <span class="kbd">←</span> <span class="kbd">→</span>).</p>
+      <div class="btn-row reveal"><a class="btn tc" href="#/parbaj/${shuffle(PARBAJ)[0].id}">⚔️ Véletlen párbaj</a></div></section>
+      ${groups.map(({ t, ps }) => `<div class="numgroup" style="--tc:${t.c}"><h3 class="reveal">${t.g} ${esc(t.title)}</h3><div class="pb-grid">${ps.map((x) => `<a class="pb-tile reveal" href="#/parbaj/${x.id}"><b>${esc(x.a[0])}</b><span>vs.</span><b>${esc(x.b[0])}</b>${S.pb[x.id] != null ? `<em>${S.pb[x.id]}%</em>` : ''}</a>`).join('')}</div></div>`).join('')}</div>`);
+  }
+  function viewDuel(id) {
+    const P = PARBAJ.find((x) => x.id === id);
+    if (!P) return viewDuelList();
+    const t = T[P.t];
+    setTone(t.c);
+    const items = shuffle(P.s);
+    let i = -1, score = 0, combo = 0, wait = false;
+    const v = mount(`<div class="duel" style="--tc:${t.c}">
+      <div class="qbar"><a class="x" href="#/parbaj" aria-label="Kilépés">✕</a><div class="track"><i id="dTrack"></i></div>${ttsBtn()}<span class="streak" id="dCombo"></span><span class="cnt" id="dCnt">${items.length} állítás</span></div>
+      <div class="duel-sides">
+        <button class="side side-a" data-s="a"><b>← ${esc(P.a[0])}</b><span>${esc(P.a[1])}</span></button>
+        <div class="vs">VS</div>
+        <button class="side side-b" data-s="b"><b>${esc(P.b[0])} →</b><span>${esc(P.b[1])}</span></button></div>
+      <div class="duel-stage" id="dStage"><div class="sw-card done"><div class="sw-k">${t.g} ${esc(t.short)} · párbaj</div><div class="sw-t">${esc(P.a[0])} <i class="vs-i">vs.</i> ${esc(P.b[0])}</div>
+        <p class="muted">Olvasd el fent a két oldalt. Utána jön ${items.length} állítás: mindegyiket küldd a jó oldalra.</p><div class="btn-row"><button class="btn tc" id="dStart">Kezdjük ▶</button></div></div></div>
+      <p class="duel-hint">Húzd a kártyát, vagy koppints a jó oldalra · <span class="kbd">←</span> <span class="kbd">→</span></p></div>`);
+    const stage = $('#dStage', v);
+    const next = () => {
+      i++; wait = false;
+      $('#dTrack', v).style.width = (i / items.length) * 100 + '%';
+      if (i >= items.length) return done();
+      $('#dCnt', v).textContent = `${i + 1} / ${items.length}`;
+      stage.innerHTML = `<div class="sw-card" id="dCard"><div class="sw-k">Melyikre igaz?</div><div class="sw-t">${esc(items[i][0])}</div><div class="sw-fb"></div></div>`;
+      swipe($('#dCard', v), pick);
+      TTS.say(items[i][0]);
+    };
+    const pick = (side) => {
+      if (i < 0 || wait) return next();
+      if (i >= items.length) return;
+      const [, good, why] = items[i], ok = side === good, card = $('#dCard', v), sideEl = $('.side-' + good, v);
+      sideEl.classList.remove('hit'); void sideEl.offsetWidth; sideEl.classList.add('hit');
+      bump(ok, 5);
+      if (ok) {
+        score++; combo++;
+        card.classList.add('fly-' + side);
+        setTimeout(next, 360);
+      } else {
+        combo = 0; wait = true;
+        card.style.transform = '';
+        card.classList.add('wrong');
+        $('.sw-fb', card).innerHTML = `<b>✕ Ez a(z) „${esc(P[good][0])}” oldala.</b><p>${esc(why || P[good][1])}</p><button class="btn sm tc" id="dGo">Értem, tovább →</button>`;
+        $('#dGo', v).addEventListener('click', (e) => { e.stopPropagation(); next(); });
+        TTS.say(`Nem. Ez a ${P[good][0]} oldala. ${why || P[good][1]}`);
+      }
+      $('#dCombo', v).textContent = combo >= 2 ? '🔥 ' + combo : '';
+      save();
+    };
+    const done = () => {
+      const pct = Math.round((score / items.length) * 100), nextP = PARBAJ[(PARBAJ.indexOf(P) + 1) % PARBAJ.length];
+      S.pb[P.id] = Math.max(S.pb[P.id] || 0, pct);
+      save();
+      if (pct >= 80) FX.confetti(140);
+      $('#dCnt', v).textContent = 'kész';
+      $('.duel-hint', v).style.visibility = 'hidden';
+      stage.innerHTML = `<div class="sw-card done">${FX.ring(pct, `<span class="pct">${pct}%</span>`)}<div class="sw-t">${score} / ${items.length}</div>
+        <p class="muted">${pct === 100 ? 'Hibátlan — ezt már nem kevered!' : 'Ahol tévedtél, olvasd el még egyszer a két oldalt fent.'}</p>
+        <div class="btn-row"><a class="btn tc" href="#/most">▶ Mit csináljak most?</a><a class="btn alt" href="#/parbaj/${nextP.id}">Következő párbaj</a><button class="btn alt" id="dAgain">Újra</button></div></div>`;
+      FX.rings(stage);
+      $('#dAgain', v).addEventListener('click', route);
+    };
+    $('#dStart', v).addEventListener('click', next);
+    $$('.side', v).forEach((b) => b.addEventListener('click', () => pick(b.dataset.s)));
+    arrowKeys(() => pick('a'), () => pick('b'), () => { if (i < 0 || wait) next(); });
+    bindTts(v, () => { if (i >= 0 && i < items.length) TTS.say(items[i][0]); });
+  }
+
+  /* ---------- Igaz vagy hamis: a kérdésbankból — jó válasz ez erre a kérdésre? ---------- */
+  /* kimaradnak a kérdések, amelyek opciói egymásra hivatkoznak („mindkettő”, „A és B”…) */
+  const SELFREF = /(mindkett|mindhár|mindegyik|egyik sem|fentiek|\b[A-D] és [A-D]\b)/i;
+  function viewSwipe(p) {
+    const t0 = p.t && T[p.t] ? T[p.t] : null, c0 = t0 ? t0.c : '#30d158';
+    setTone(c0);
+    const known = (q) => (S.seen[q.id] && S.seen[q.id].last ? 1 : 0);
+    const src = shuffle(BANK.filter((q) => (!t0 || q.t === t0.id) && !q.o.some((o) => SELFREF.test(o)))).sort((a, b) => known(a) - known(b)).slice(0, 20);
+    const items = shuffle(src).map((q) => {
+      const want = Math.random() < 0.5;
+      const ks = q.o.map((_, k) => k).filter((k) => q.a.includes(k) === want);
+      const k = ks.length ? ks[(Math.random() * ks.length) | 0] : q.a[0];
+      return { q, k, truth: q.a.includes(k) };
+    });
+    let i = -1, score = 0, combo = 0, wait = false;
+    const miss = [];
+    const v = mount(`<div class="duel swipe" style="--tc:${c0}">
+      <div class="qbar"><a class="x" href="#/gyakorlas" aria-label="Kilépés">✕</a><div class="track"><i id="vTrack"></i></div>${ttsBtn()}<span class="streak" id="vCombo"></span><span class="cnt" id="vCnt"></span></div>
+      <div class="sw-head"><h1>⚡ Igaz vagy hamis?${t0 ? ` <small>${t0.g} ${esc(t0.short)}</small>` : ''}</h1><p>Jó válasz ez a kérdésre? Húzd <b>jobbra</b>, ha igen, <b>balra</b>, ha nem.</p></div>
+      <div class="duel-stage" id="vStage"></div>
+      <div class="sw-btns" id="vBtns"><button class="btn no-btn" id="vNo">✕ Nem jó</button><button class="btn yes-btn" id="vYes">Ez a jó ✓</button></div></div>`);
+    const stage = $('#vStage', v);
+    const next = () => {
+      i++; wait = false;
+      $('#vTrack', v).style.width = (i / items.length) * 100 + '%';
+      if (i >= items.length) return done();
+      $('#vCnt', v).textContent = `${i + 1} / ${items.length}`;
+      const { q, k } = items[i], t = T[q.t] || {};
+      stage.innerHTML = `<div class="sw-card" id="vCard"><div class="sw-k">${t.g || ''} ${esc(t.short || '')}</div><div class="sw-q">${esc(q.q)}</div><div class="sw-arrow">erre a válasz:</div><div class="sw-t">${esc(q.o[k])}</div><div class="sw-fb"></div></div>`;
+      swipe($('#vCard', v), (s) => pick(s === 'b'));
+      TTS.say(`${q.q} ... ${q.o[k]}`);
+    };
+    const pick = (yes) => {
+      if (wait) return next();
+      if (i < 0 || i >= items.length) return;
+      const it = items[i], ok = yes === it.truth, card = $('#vCard', v);
+      if (ok) {
+        bump(true, 5);
+        score++; combo++;
+        card.classList.add(yes ? 'fly-b' : 'fly-a');
+        setTimeout(next, 330);
+        if (combo % 10 === 0) { FX.confetti(90); FX.toast(`🔥 ${combo} egymás után!`); }
+      } else {
+        record(it.q.id, false);
+        combo = 0; wait = true; miss.push(it);
+        card.style.transform = '';
+        card.classList.add('wrong');
+        $('.sw-fb', card).innerHTML = `<b>${it.truth ? '✕ Pedig ez jó válasz!' : '✕ Ez nem jó válasz.'}</b><p><b>Helyes:</b> ${it.q.a.map((k) => esc(it.q.o[k])).join(' · ')}</p>${it.q.x ? `<p>${esc(it.q.x)}</p>` : ''}<button class="btn sm tc" id="vGo">Értem, tovább →</button>`;
+        $('#vGo', v).addEventListener('click', (e) => { e.stopPropagation(); next(); });
+        TTS.say(`Nem. A helyes válasz: ${it.q.a.map((k) => it.q.o[k]).join(', ')}`);
+      }
+      $('#vCombo', v).textContent = combo >= 2 ? '🔥 ' + combo : '';
+      save();
+    };
+    const done = () => {
+      const pct = items.length ? Math.round((score / items.length) * 100) : 0;
+      if (pct >= 80) FX.confetti(150);
+      $('#vBtns', v).style.display = 'none';
+      $('#vCnt', v).textContent = 'kész';
+      stage.innerHTML = `<div class="sw-card done">${FX.ring(pct, `<span class="pct">${pct}%</span>`)}<div class="sw-t">${score} / ${items.length}</div>
+        <div class="btn-row"><a class="btn tc" href="#/most">▶ Mit csináljak most?</a><button class="btn alt" id="vAgain">Még 20 ⚡</button></div>
+        ${miss.length ? `<div class="sw-miss"><h3 class="h-card">Ezeket nézd át</h3>${miss.map((it) => `<div><span>${esc(it.q.q)}</span><b>✓ ${it.q.a.map((k) => esc(it.q.o[k])).join(' · ')}</b></div>`).join('')}</div>` : ''}</div>`;
+      FX.rings(stage);
+      $('#vAgain', v).addEventListener('click', route);
+    };
+    $('#vNo', v).addEventListener('click', () => pick(false));
+    $('#vYes', v).addEventListener('click', () => pick(true));
+    arrowKeys(() => pick(false), () => pick(true), () => { if (wait) next(); });
+    bindTts(v, () => { const it = items[i]; if (it) TTS.say(`${it.q.q} ... ${it.q.o[it.k]}`); });
+    if (!items.length) { stage.innerHTML = '<div class="empty"><div class="e">🤷</div><p>Nincs kérdés ebben a válogatásban.</p></div>'; return; }
+    next();
+  }
+
+  /* ---------- Évszám-létra (a 2026-os diák szerint) ---------- */
+  const LADDER = [
+    [3, 'AB elnöke — 2026 óta a tagok választják maguk közül'],
+    [4, 'Országgyűlés (199 képviselő)'],
+    [5, 'Köztársasági elnök (egyszer újraválasztható) · Európai Parlament'],
+    [6, 'Kúria elnöke · OBH elnöke · ombudsman'],
+    [9, 'Alkotmánybírák (2026 óta; előtte 12) · legfőbb ügyész · hágai Nemzetközi Bíróság bírái'],
+    [12, 'ÁSZ elnöke'],
+  ];
+  function ladderHTML() {
+    return `<div class="ladder">${LADDER.map(([y, w], i) => `<div class="rung reveal" style="--i:${i};--w:${Math.round((y / 12) * 100)}%"><div class="rg-y">${y} év</div><div class="rg-bar"><i></i></div><div class="rg-w">${w}</div></div>`).join('')}
+      <p class="ladder-tip reveal">💡 Rigmus: <b>3</b> az AB elnöke, <b>4</b> a Parlament, <b>5</b> az Elnök, <b>6</b> a bírák főnökei és az ombudsman, <b>9</b> az Alaptörvény őrei és a vádló, <b>12</b> a pénz őre (ÁSZ).</p></div>`;
+  }
+
+  /* ---------- Egyoldalas összefoglaló ---------- */
+  function viewSummary() {
+    const v = mount(`<div class="wrap summary">
+      <section class="hero"><p class="eyebrow">Utolsó átnézés · ZH előtt reggel</p><h1 class="h-hero word-rise">Minden, ami kell, <span class="grad-text">egy helyen.</span></h1>
+        <p class="lead reveal">Témánként: a lényeg egy mondatban, a számok, a csapdák és az összekeverhető párok. Görgesd végig egyszer, lassan.</p>
+        <div class="btn-row reveal"><button class="btn alt" id="printBtn">🖨️ Nyomtatás / PDF</button><a class="btn tc" href="#/zh">⏱️ ZH-szimuláció</a></div>
+        <div class="chips reveal sum-nav">${LECKEK.map((l) => `<button class="chip" data-go="sum-${l.id}" style="--tc:${T[l.id].c}">${T[l.id].g} ${esc(T[l.id].short)}</button>`).join('')}</div></section>
+      <section class="sec"><div class="sec-head"><h2 class="h-sec reveal">🪜 Évszám-létra</h2></div>${ladderHTML()}</section>
+      ${LECKEK.map((l) => { const t = T[l.id]; return `<section class="sum-topic" id="sum-${l.id}" style="--tc:${t.c}">
+        <h2 class="reveal">${t.g} <span>${t.no}.</span> ${esc(t.title)}</h2>
+        <div class="sum-one reveal">${l.egyMondat}</div>
+        ${l.szamok && l.szamok.length ? `<div class="sum-nums reveal">${l.szamok.map((n) => `<span><b>${esc(n.v)}</b> ${n.l}</span>`).join('')}</div>` : ''}
+        <ul class="sum-traps reveal">${l.csapdak.map((c) => `<li>${c}</li>`).join('')}</ul>
+        ${PARBAJ.filter((x) => x.t === l.id).map((x) => `<div class="sum-pair reveal"><div><b>${esc(x.a[0])}</b>${esc(x.a[1])}</div><i>vs.</i><div><b>${esc(x.b[0])}</b>${esc(x.b[1])}</div></div>`).join('')}
+      </section>`; }).join('')}
+      <div class="btn-row"><a class="btn tc" href="#/most">▶ Mit csináljak most?</a></div>
+    </div>`);
+    $('#printBtn', v).addEventListener('click', () => window.print());
+    $$('[data-go]', v).forEach((b) => b.addEventListener('click', () => document.getElementById(b.dataset.go).scrollIntoView({ behavior: 'smooth', block: 'start' })));
   }
 
   /* ---------- Gyakorlás menü ---------- */
@@ -352,12 +685,16 @@
     const tile = (href, ic, mc, t, d, n) => `<a class="mode reveal" href="${href}" style="--mc:${mc}"><div class="ic">${ic}</div><div class="t">${t}</div><div class="d">${d}</div><div class="n">${n}</div></a>`;
     return `<div class="grid grid-3">
       ${tile('#/sztori/' + TEMAK[0].id, '▶️', '#bf5af2', 'Fókusz mód', 'A leckék sztoriként: egyszerre egy kártya, a pontok egyenként jönnek elő, közben gyors kérdések.', 'ADHD-barát')}
+      ${tile('#/most', '🧭', '#ff375f', 'Mit csináljak most?', 'Nem kell döntened: a válaszaid alapján megmondja a legjobb következő 5 percet.', 'Edző')}
+      ${tile('#/parbaj', '⚔️', '#ff9f0a', 'Párbaj', `Összekeverhető párok (semmis vs. megtámadható, foglaló vs. előleg…). Húzd a jó oldalra!`, `${PARBAJ.length} pár`)}
+      ${tile('#/villam', '⚡', '#30d158', 'Igaz vagy hamis?', 'Villámgyors lapozás: jó válasz ez a kérdésre? Jobbra igen, balra nem.', '20 kártya / kör')}
       ${tile('#/kviz?mode=mix', '🎲', '#5e5ce6', 'Vegyes kvíz', '20 véletlen kérdés az összes témából, azonnali magyarázattal.', `${BANK.length} kérdésből`)}
       ${tile('#/kviz?mode=hibak', '🎯', '#ff375f', 'Hibáim', 'Csak azok, amiket elrontottál. Ha jól válaszolsz, kikerül a listáról.', `${S.wrong.length} vár rád`)}
       ${tile('#/zh', '⏱️', '#ff9f0a', 'ZH-szimuláció', '30 kérdés, 30 perc, magyarázat csak a végén — mint élesben. Becsült jeggyel.', 'Vizsga-mód')}
       ${tile('#/kviz?mode=teszt', '📄', '#0a84ff', 'jogteszt.pdf végig', `Mind a ${nT} kérdés sorban. Ott folytatod, ahol abbahagytad.`, `${BANK.filter((q) => q.src === 'teszt' && S.seen[q.id]).length} / ${nT} kész`)}
       ${tile('#/kartya', '🃏', '#30d158', 'Villámkártyák', 'Fogalmak és számok, megfordítható kártyákon. A „nem tudtam” visszajön.', 'Szóköz = fordítás')}
       ${tile('#/szamok', '🔢', '#bf5af2', 'Számok összesítő', 'Minden határidő, létszám, életkor egy helyen.', 'Évek, napok, fők')}
+      ${tile('#/osszefoglalo', '📄', '#64d2ff', 'Egyoldalas összefoglaló', 'Lényeg, számok, csapdák, párok — a reggeli utolsó átnézéshez. Nyomtatható.', 'ZH előtt')}
     </div>`;
   }
   function viewPractice() {
@@ -381,6 +718,13 @@
       pool = shuffle(S.wrong.map((i) => BY_ID[i]).filter(Boolean));
       opts.title = 'Hibáim';
       if (!pool.length) { mount(`<div class="wrap"><div class="empty"><div class="e">🎉</div><h2>Nincs hibás kérdésed!</h2><p>Vagy még nem gyakoroltál, vagy mindent kijavítottál.</p><a class="btn" href="#/kviz?mode=mix">Vegyes kvíz</a></div></div>`); return; }
+    } else if (p.mode === 'most') {
+      /* esedékes ismétlések (a legrégebben esedékes elöl), kiegészítve a hibákkal és új kérdésekkel */
+      pool = dueIds().slice(0, 12).map((id) => BY_ID[id]);
+      const add = (qs) => { for (const q of qs) { if (pool.length >= 10) break; if (q && !pool.includes(q)) pool.push(q); } };
+      add(shuffle(S.wrong.map((id) => BY_ID[id])));
+      add(shuffle(BANK.filter((q) => !S.seen[q.id])));
+      opts.title = 'Ismétlés';
     } else if (p.mode === 'zh') {
       pool = shuffle(BANK.filter((q) => q.t !== 'fogyaszto')).slice(0, 30);
       opts = { title: 'ZH-szimuláció', exam: true, minutes: 30 };
@@ -399,6 +743,7 @@
       pool = shuffle(BANK).slice(0, 20);
       opts.title = 'Vegyes kvíz';
     }
+    if (p.n) pool = pool.slice(0, +p.n);
     const v = mount('<div class="quiz" id="quizRoot"></div>');
     runQuiz($('#quizRoot', v), pool, opts);
   }
@@ -528,7 +873,7 @@
         ${FX.ring(pct, `<span class="pct">${pct}%</span>`, true)}
         <div class="grade">${o.exam ? grade + ' · ' + words[grade] : score + ' / ' + pool.length}</div>
         <p class="lead">${o.exam ? `${score} / ${pool.length} jó válasz. A jegy csak becslés (50% elégséges, 63% közepes, 75% jó, 87% jeles).` : pct >= 80 ? 'Ez nagyon megy. 🔥' : pct >= 50 ? 'Jó úton vagy — a hibákat nézd át alább.' : 'Nézd át a leckét, aztán jöhet a Hibáim mód.'}</p>
-        <div class="btn-row"><a class="btn" href="#/kviz?mode=hibak">Hibáim gyakorlása (${S.wrong.length})</a><a class="btn alt" href="#/gyakorlas">Másik mód</a></div>
+        <div class="btn-row"><a class="btn" href="#/most">▶ Mit csináljak most?</a><a class="btn alt" href="#/kviz?mode=hibak">Hibáim (${S.wrong.length})</a><a class="btn alt" href="#/gyakorlas">Másik mód</a></div>
         ${wrongs.length ? `<div class="wrong-list"><h3 class="h-card">Ezeket rontottad el</h3>${wrongs.map((q) => `<div class="card"><div class="q">${esc(q.q)}</div><div class="a">✓ ${q.a.map((k) => esc(q.o[k])).join(' · ')}</div>${q.x ? `<div class="muted" style="font-size:14px;margin-top:4px">${esc(q.x)}</div>` : ''}${q.old ? `<div class="muted" style="font-size:13px;margin-top:4px">⚠️ ${oldNote(q.old)}</div>` : ''}</div>`).join('')}</div>` : ''}
       </div>`;
       FX.rings(root);
@@ -594,7 +939,8 @@
   function viewNumbers() {
     mount(`<div class="wrap"><section class="hero"><p class="eyebrow">Számok összesítő</p><h1 class="h-hero word-rise">Évek, napok, <span class="grad-text">fők.</span></h1>
       <p class="lead reveal">A teszt imádja a számokat. Itt van mind egy helyen, témánként.</p>
-      <div class="btn-row reveal"><a class="btn" href="#/kartya">Kikérdezés kártyákkal</a></div></section>
+      <div class="btn-row reveal"><a class="btn" href="#/kartya">Kikérdezés kártyákkal</a><a class="btn alt" href="#/osszefoglalo">📄 Egyoldalas összefoglaló</a></div></section>
+      <section class="sec"><div class="sec-head"><h2 class="h-sec reveal">🪜 Évszám-létra</h2><p class="lead reveal">Ki hány évre kapja a megbízatását — a teszt kedvenc kérdése.</p></div>${ladderHTML()}</section>
       ${LECKEK.filter((l) => l.szamok && l.szamok.length).map((l) => { const t = T[l.id]; return `<div class="numgroup" style="--tc:${t.c}"><h3 class="reveal">${t.g} ${esc(t.title)}</h3>
         <div class="numbers">${l.szamok.map((n) => `<div class="num reveal"><div class="v" data-count="${esc(n.v)}">${esc(n.v)}</div><div class="l">${n.l}</div></div>`).join('')}</div></div>`; }).join('')}
     </div>`);

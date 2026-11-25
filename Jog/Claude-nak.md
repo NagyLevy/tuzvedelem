@@ -32,6 +32,8 @@ Jog/
   data/jogteszt-1..3.js  JOG_TESZT — a jogteszt.pdf mind a 215 kérdése (n: 1–215)
   data/kurzus.js      JOG_KURZUS — 159 kérdés a COEDU kurzus önellenőrzőiből (GENERÁLT, ne kézzel szerkeszd)
   data/kurzus-x.js    JOG_KURZUS_X — kézzel írt magyarázat mind a 159 kurzus-kérdéshez ({id: 'szöveg'} vagy {x, old})
+  data/parbajok.js    JOG_PARBAJ — 33 összekeverhető fogalompár: {id, t, a:[név, lényeg], b:[név, lényeg], s:[[állítás, 'a'|'b', miért?]]}
+  podcast/            NotebookLM-források leckénként + összefoglaló (Suits-stílus), 00-UTMUTATO.md
   data/animaciok.js   JOG_ANIM — animált „videó” ábrák leckénként (piramis / lanc / nyil típus, lépésenkénti narrációval)
   data/leckek/01-alap.js … 11-fogyaszto.js   JOG_LECKEK — a 11 lecke
   tools/parse_course.py  a kurzus-zip lesson*.html fájljaiból generálja a kurzus.js-t
@@ -81,9 +83,19 @@ window.JOG_LECKEK = (window.JOG_LECKEK || []).concat([{
 | `#/kviz?mode=mix\|hibak\|teszt&t=<téma>&src=` | kvíz azonnali visszajelzéssel, magyarázattal és „Nem érted? → lecke” linkkel |
 | `#/zh` | ZH-szimuláció: 30 kérdés, időre, visszajelzés nélkül, a végén jegy (50/63/75/87%) |
 | `#/kartya?t=` | villámkártyák (Szóköz = fordít, ← nem tudtam, → tudtam) |
-| `#/szamok` | az összes szám témánként |
+| `#/szamok` | az összes szám témánként + 🪜 évszám-létra (megbízatási idők, rigmussal) |
+| `#/most` | **Edző – „Mit csináljak most?”**: egyetlen javaslat (`coachPick`): ① ha sok esedékes ismétlés van → `#/kviz?mode=most`; ② különben az első még át nem vett lecke fókusz módban; ③ ha minden téma ≥85% → ZH; ④ különben a leggyengébb téma, váltakozva kvíz (10) / párbaj / igaz-hamis. Alatta: ZH-visszaszámlálás, napi sorozat, XP, mai adag, témasávok a leggyengébbtől. |
+| `#/kviz?mode=most` | ismétlés: esedékes kérdések (ismétlési rendszer), kiegészítve hibákkal és új kérdésekkel (10) |
+| `#/kviz?...&n=10` | bármely kvíz levágása n kérdésre |
+| `#/parbaj`, `#/parbaj/:id` | **Párbaj**: két összekeverhető fogalom egymás mellett, az állításokat a jó oldalra kell húzni (húzás / koppintás / ←→). Legjobb eredmény: `S.pb[id]`. |
+| `#/villam?t=` | **Igaz vagy hamis?**: 20 kártya a kérdésbankból (kérdés + egy opció, 50% eséllyel jó); jobbra = jó válasz, balra = nem. A „mindkettő / A és B” típusú opciójú kérdések kimaradnak. Rossz válasz → `record(id, false)`. |
+| `#/osszefoglalo` | egyoldalas, nyomtatható összefoglaló: évszám-létra + témánként egy mondat, számok, csapdák, párbaj-párok |
 
-- Haladás: `localStorage['jog.v1']` = `{seen:{id:{ok,bad,last}}, wrong:[id…], best, flash}`.
+- Haladás: `localStorage['jog.v1']` = `{seen:{id:{ok,bad,last}}, wrong:[id…], best, flash, srs:{id:{b,due}}, xp, days:{'ÉÉÉÉ-HH-NN':n}, story:{témaId:ts}, pb:{párId:%}, coachN}`.
+- Ismétlési rendszer (`record`): rossz → 2 perc; jó → 10 p, 1 ó, 5 ó, 1 nap, 3 nap fokozatok (`IV`); elsőre eltalált kérdés rögtön az 1 órás fokra. `dueIds()` = esedékesek.
+- XP: kvíz-válasz 10, párbaj / igaz-hamis 5 (`bump`); `S.days` a napi sorozathoz (`dayStreak`).
+- Hangos mód: `localStorage['jog.tts']`, böngésző `speechSynthesis` hu-HU hanggal (`TTS.say`). Fókusz módban a dia címét, minden ütemet és az animációk narrációját felolvassa (ilyenkor az animáció lassabban lép); párbajban és igaz-hamisban az állítást.
+- Fókusz mód eleje: „Tippelj!” előzetes kérdés (pretest-hatás); a végén `S.story[id]` jelzi, hogy a lecke át van véve.
 - Téma: `localStorage['jog.theme']`.
 - Billentyűk: 1–9 vagy A–I = válasz, Enter / → = tovább.
 
@@ -128,12 +140,15 @@ JOG_LECKEK.flatMap(l => l.mini).filter(id => !(/^j\d+$/.test(id) ? JOG_TESZT.som
 Utolsó állapot (2026-11-25):
 - 215 + 159 kérdés, 0 hibás, a 11 lecke kész.
 - Böngészőben végigtesztelve: főoldal, lecke, kvíz, többválaszos, Hibáim, ZH-szimuláció, villámkártya, Számok, mobil, sötét és világos mód. Konzolhiba nincs.
+- Utána: edző (`#/most`), ismétlés-mód, párbaj (húzással is), igaz-hamis, összefoglaló, évszám-létra, hangos mód, tipp-kérdés — asztalon, mobilon, sötétben tesztelve, konzolhiba nincs.
 
 ## Ami még hátravan / ötletek
 
 - [ ] **.impera kérdések felvitele**, ha a felhasználó átadja a szövegüket (lásd fent).
 - [ ] Merge `jog-gyakorlo` → `main`, hogy élesben is elérhető legyen (csak a tulajdonos kérésére!).
-- [ ] Opcionális: „csak a gyengéim” mód a mastery alapján; témánkénti ZH-szimuláció; PWA/offline.
+- [ ] Opcionális: témánkénti ZH-szimuláció; PWA/offline.
+- [ ] Ha a felhasználó NotebookLM-ből mp3-at ad, leckénként beágyazható (Podcast → kvíz folyamat).
+- [ ] A `D:\jog\Jogi-ismeretek-ZH-kérdések-2026.pdf` NEM megbízható (ismeretlen, valószínűleg AI-generált): nem importáljuk, legfeljebb ötletnek, a diákkal ellenőrizve.
 - [ ] Ha a felhasználó új diát vagy minta-ZH-t hoz, a tényeket a 2. pont szerint egyeztesd, és ahol eltér, `old` megjegyzést írj.
 
 ## Munkastílus, amit a felhasználó kért
