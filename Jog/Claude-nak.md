@@ -76,6 +76,7 @@ window.JOG_LECKEK = (window.JOG_LECKEK || []).concat([{
 |---|---|
 | `#/` | Áttekintés: hero, statisztika, téma-gyűrűk, módok |
 | `#/leckek`, `#/lecke/:id` | Lecke: Egy mondatban → 🎬 animált ábrák → kártyák → 🔢 Számok → ⚠️ Csapdák → 📋 Mit kérdeznek? (a téma összes kérdése a jó válasszal) → mini-kvíz |
+| `#/sztori/:id` | **Fókusz mód (ADHD-barát)**: a lecke teljes képernyős, Instagram-sztori-szerű diákra bontva (intro → animációk → kártyák, a pontok koppintásra egyenként → minden 2. kártya után gyors kérdés → számok felpörögve → csapdák rázkódva → 2 záró kérdés → konfetti). Szóköz/→ tovább, ← vissza, Esc bezár, 1–5 válasz. A `.story` overlay a `document.body`-ba kerül (a `.view` transform-animációja miatt), a cleanup eltávolítja. |
 | `#/gyakorlas` | módválasztó (forrás: mind / jogteszt / kurzus) |
 | `#/kviz?mode=mix\|hibak\|teszt&t=<téma>&src=` | kvíz azonnali visszajelzéssel, magyarázattal és „Nem érted? → lecke” linkkel |
 | `#/zh` | ZH-szimuláció: 30 kérdés, időre, visszajelzés nélkül, a végén jegy (50/63/75/87%) |
@@ -138,5 +139,6 @@ Utolsó állapot (2026-11-25):
 ## Munkastílus, amit a felhasználó kért
 
 - Magyarul válaszolj, röviden.
+- A felhasználó ADHD-s: minden tanulós tartalom legyen animált, rövid adagokban, egyszerre egy dolog (lásd Fókusz mód).
 - Commit üzenet végére: `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>` (vagy amelyik modell vagy).
 - `main`-re pusholni vagy merge-elni csak kérésre.

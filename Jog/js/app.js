@@ -63,9 +63,9 @@
     if (cleanup) { cleanup(); cleanup = null; }
     const { parts, params } = parse();
     const page = parts[0] || 'home';
-    $$('[data-nav]').forEach((a) => a.classList.toggle('on', a.dataset.nav === page || (page === 'lecke' && a.dataset.nav === 'leckek') || (['kviz', 'kartya', 'zh'].includes(page) && a.dataset.nav === 'gyakorlas')));
+    $$('[data-nav]').forEach((a) => a.classList.toggle('on', a.dataset.nav === page || (['lecke', 'sztori'].includes(page) && a.dataset.nav === 'leckek') || (['kviz', 'kartya', 'zh'].includes(page) && a.dataset.nav === 'gyakorlas')));
     setTone(null);
-    const views = { home: viewHome, leckek: viewLessons, lecke: () => viewLesson(parts[1]), gyakorlas: viewPractice, kviz: () => viewQuiz(params), zh: () => viewQuiz({ mode: 'zh' }), kartya: () => viewFlash(params), szamok: viewNumbers };
+    const views = { home: viewHome, leckek: viewLessons, lecke: () => viewLesson(parts[1]), gyakorlas: viewPractice, kviz: () => viewQuiz(params), zh: () => viewQuiz({ mode: 'zh' }), kartya: () => viewFlash(params), szamok: viewNumbers, sztori: () => viewStory(parts[1]) };
     (views[page] || viewHome)();
     window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
     app.querySelectorAll('.view').forEach((v) => { FX.words(v); FX.reveal(v); FX.rings(v); });
@@ -109,7 +109,8 @@
     mount(`<div class="wrap">
       <section class="hero"><p class="eyebrow">11 lecke · kb. 5 perc mindegyik</p>
         <h1 class="h-hero word-rise">Nem voltál órán? <span class="grad-text">Semmi baj.</span></h1>
-        <p class="lead reveal">Minden lecke: egy mondatos lényeg → fogalomkártyák hasonlatokkal → a számok, amiket kérdeznek → csapdák → mini-kvíz.</p></section>
+        <p class="lead reveal">Minden lecke: egy mondatos lényeg → animált ábrák → fogalomkártyák hasonlatokkal → a számok, amiket kérdeznek → csapdák → mini-kvíz.</p>
+        <div class="btn-row reveal"><a class="btn tc focus-btn" href="#/sztori/${TEMAK[0].id}">▶ Fókusz mód <small>egyszerre egy dolog, animálva, közben kérdésekkel</small></a></div></section>
       <div class="grid grid-2">${TEMAK.map((t) => topicCard(t)).join('')}</div></div>`);
   }
 
@@ -131,6 +132,7 @@
         <p class="eyebrow">${t.no}. lecke · ~${l.perc} perc</p>
         <h1 class="h-hero word-rise">${esc(t.title)}</h1>
         <p class="lead reveal">${esc(t.lead)}</p>
+        <div class="btn-row reveal"><a class="btn tc focus-btn" href="#/sztori/${id}">▶ Fókusz mód <small>kártyánként, animálva</small></a></div>
         <div class="one-liner reveal" id="lenyeg">${l.egyMondat}</div>
       </section>
       <div class="toc"><div class="seg">
@@ -213,11 +215,143 @@
       ${why ? `<details><summary>Miért?</summary>${why}</details>` : ''}</div>`;
   }
 
+  /* ---------- Fókusz mód („sztori”): egy lecke diákra bontva; minden diának „ütemei” vannak,
+     koppintásra egyenként jelennek meg; minden 2. fogalomkártya után egy gyors kérdés ---------- */
+  function storySlides(id) {
+    const t = T[id], l = L[id], anims = ANIM[id] || [];
+    const qs = shuffle(topicQs(id).filter((q) => q.a.length === 1 && q.o.length <= 5 && q.o.join('').length < 420));
+    const slides = [{ kind: 'intro' }];
+    anims.forEach((a) => slides.push({ kind: 'anim', a }));
+    l.kartyak.forEach((k, i) => {
+      slides.push({ kind: 'card', k });
+      if (i % 2 === 1 && qs.length) slides.push({ kind: 'q', q: qs.shift() });
+    });
+    if (l.szamok && l.szamok.length) slides.push({ kind: 'nums' });
+    slides.push({ kind: 'traps' });
+    qs.slice(0, 2).forEach((q) => slides.push({ kind: 'q', q }));
+    slides.push({ kind: 'end' });
+    return slides;
+  }
+  function storyHTML(sl, t, l) {
+    const nextT = TEMAK[TEMAK.indexOf(t) + 1];
+    switch (sl.kind) {
+      case 'intro': return `<div class="s-intro"><div class="s-emoji">${t.g}</div><p class="eyebrow">${t.no}. lecke · fókusz mód</p><h1>${esc(t.title)}</h1>
+        <div class="beat s-one"><b>Egy mondatban:</b> ${l.egyMondat}</div></div>`;
+      case 'anim': return animBlock(sl.a).replace('anim reveal', 'anim');
+      case 'card': return `<div class="s-card">${sl.k.k ? `<div class="k">${esc(sl.k.k)}</div>` : ''}<h2>${sl.k.cim}</h2><div class="s-body">${sl.k.html}</div>${sl.k.hasonlat ? `<div class="analogy beat">${sl.k.hasonlat}</div>` : ''}</div>`;
+      case 'nums': return `<div class="s-card"><div class="k">Magold be</div><h2>🔢 Számok</h2><div class="s-nums">${l.szamok.map((n) => `<div class="beat s-num"><div class="v">${esc(n.v)}</div><div class="l">${n.l}</div></div>`).join('')}</div></div>`;
+      case 'traps': return `<div class="s-card"><div class="k">Itt szoktak elcsúszni</div><h2>⚠️ Csapdák</h2><div class="s-traps">${l.csapdak.map((c) => `<div class="beat trap"><i>!</i><div>${c}</div></div>`).join('')}</div></div>`;
+      case 'q': {
+        const order = shuffle(sl.q.o.map((_, i) => i));
+        return `<div class="s-card s-q"><div class="k">Gyors kérdés</div><h2>${esc(sl.q.q)}</h2><div class="s-opts">${order.map((i) => `<button class="s-opt" data-i="${i}">${esc(sl.q.o[i])}</button>`).join('')}</div><div class="s-fb"></div></div>`;
+      }
+      default: return `<div class="s-intro"><div class="s-emoji">🎉</div><h1>Kész a lecke!</h1><p class="lead">Most rögzítsd: nézd át a kérdéslistát, vagy gyakorold a témát.</p>
+        <div class="btn-row"><a class="btn tc" href="#/kviz?t=${t.id}">Téma-kvíz</a><a class="btn alt" href="#/lecke/${t.id}">📋 Mit kérdeznek?</a>${nextT ? `<a class="btn alt" href="#/sztori/${nextT.id}">Következő: ${esc(nextT.short)} ▶</a>` : ''}</div></div>`;
+    }
+  }
+  /* a számok „felpörögnek”: a szöveg elején álló számot 0-ról animálja, az utótagot megtartja */
+  function countUp(el) {
+    const m = el.textContent.match(/^(\d[\d ]*)(.*)$/);
+    if (!m) return;
+    const end = parseInt(m[1].replace(/ /g, ''), 10), suf = m[2], spaced = / /.test(m[1]), t0 = performance.now();
+    const fmt = (v) => (spaced ? v.toLocaleString('hu-HU').replace(/\s/g, ' ') : String(v));
+    const f = (now) => { const k = Math.min(1, (now - t0) / 700); el.textContent = fmt(Math.round(end * (1 - Math.pow(1 - k, 3)))) + suf; if (k < 1) requestAnimationFrame(f); };
+    requestAnimationFrame(f);
+  }
+  function viewStory(id) {
+    const t = T[id], l = L[id];
+    if (!t || !l) return viewLessons();
+    setTone(t.c);
+    const slides = storySlides(id);
+    /* a body-ba kerül, mert a .view belépő animációja (transform) elrontaná a position: fixed-et */
+    mount('');
+    const v = document.createElement('div');
+    v.className = 'story';
+    v.style.setProperty('--tc', t.c);
+    v.innerHTML = (`
+      <div class="s-top"><div class="s-segs">${slides.map(() => '<span><i></i></span>').join('')}</div>
+        <div class="s-bar"><span>${t.g} ${esc(t.short)}</span><a class="s-x" href="#/lecke/${id}" aria-label="Bezárás">✕</a></div></div>
+      <div class="s-stage" id="sStage"></div>
+      <div class="s-bot"><button class="btn alt s-prev" aria-label="Vissza">‹</button><span class="s-hint">Koppints bárhová · <span class="kbd">Szóköz</span></span><button class="btn tc s-next">Tovább ›</button></div>`);
+    document.body.appendChild(v);
+    const stage = $('#sStage', v), segs = $$('.s-segs i', v), nextBtn = $('.s-next', v);
+    let si = 0, bi = 0, beats = [], stopAnim = null, answered = false;
+    const paint = () => {
+      segs.forEach((g, i) => (g.style.width = i < si ? '100%' : i > si ? '0%' : `${beats.length ? Math.round(((bi + 1) / (beats.length + 1)) * 100) : 100}%`));
+      beats.forEach((b, i) => { b.classList.toggle('on', i <= bi - 1); b.classList.toggle('now', i === bi - 1); });
+      const cur = beats[bi - 1];
+      if (cur) {
+        const num = cur.querySelector('.v');
+        if (num && !cur.dataset.done) { cur.dataset.done = 1; countUp(num); }
+        const r = cur.getBoundingClientRect(), sr = stage.getBoundingClientRect();
+        if (r.bottom > sr.bottom - 20) stage.scrollBy({ top: r.bottom - sr.bottom + 60, behavior: 'smooth' });
+      }
+      const sl = slides[si];
+      nextBtn.textContent = si === slides.length - 1 ? 'Bezárás' : sl.kind === 'q' && !answered ? 'Kihagyom ›' : 'Tovább ›';
+    };
+    const render = (dir, atEnd) => {
+      if (stopAnim) { stopAnim(); stopAnim = null; }
+      const sl = slides[si];
+      answered = false;
+      stage.innerHTML = `<div class="s-slide ${dir < 0 ? 'back' : ''}">${storyHTML(sl, t, l)}</div>`;
+      stage.scrollTop = 0;
+      const body = $('.s-body', stage);
+      beats = $$('.beat', stage);
+      if (body) {
+        const fromBody = [];
+        [...body.children].forEach((c) => (/^(UL|OL)$/.test(c.tagName) ? fromBody.push(...c.children) : fromBody.push(c)));
+        fromBody.forEach((b) => b.classList.add('beat'));
+        beats = [...fromBody, ...beats];
+      }
+      if (sl.kind === 'anim') stopAnim = animPlayer($('.anim', stage), sl.a);
+      if (sl.kind === 'q') bindQ(sl.q);
+      if (sl.kind === 'end') FX.confetti(160);
+      bi = atEnd ? beats.length : sl.kind === 'intro' ? 1 : 0;
+      paint();
+    };
+    const bindQ = (q) => {
+      $$('.s-opt', stage).forEach((b) => b.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (answered) return;
+        answered = true;
+        const ok = +b.dataset.i === q.a[0];
+        record(q.id, ok);
+        $$('.s-opt', stage).forEach((o) => { o.disabled = true; if (+o.dataset.i === q.a[0]) o.classList.add('ok'); });
+        if (!ok) b.classList.add('bad');
+        $('.s-fb', stage).innerHTML = `<div class="fb ${ok ? 'ok' : 'no'}"><div class="h">${ok ? '✓ Ez az!' : '✕ Nem egészen.'}</div>${q.x ? `<p>${esc(q.x)}</p>` : ''}${q.old ? `<div class="old">${oldNote(q.old)}</div>` : ''}</div>`;
+        if (ok) FX.confetti(50);
+        paint();
+      }));
+    };
+    const next = () => {
+      if (bi < beats.length) { bi++; return paint(); }
+      if (si < slides.length - 1) { si++; render(1); } else location.hash = `#/lecke/${id}`;
+    };
+    const prev = () => {
+      if (bi > (slides[si].kind === 'intro' ? 1 : 0)) { bi--; return paint(); }
+      if (si > 0) { si--; render(-1, true); }
+    };
+    nextBtn.addEventListener('click', (e) => { e.stopPropagation(); next(); });
+    $('.s-prev', v).addEventListener('click', (e) => { e.stopPropagation(); prev(); });
+    stage.addEventListener('click', (e) => { if (!e.target.closest('a, button, .anim')) next(); });
+    const onKey = (e) => {
+      if (e.key === ' ' || e.key === 'ArrowRight' || e.key === 'Enter') { e.preventDefault(); next(); }
+      else if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
+      else if (e.key === 'Escape') location.hash = `#/lecke/${id}`;
+      else if (slides[si].kind === 'q' && /^[1-5]$/.test(e.key)) { const o = $$('.s-opt', stage)[+e.key - 1]; if (o) o.click(); }
+    };
+    document.addEventListener('keydown', onKey);
+    document.documentElement.classList.add('story-open');
+    cleanup = () => { document.removeEventListener('keydown', onKey); document.documentElement.classList.remove('story-open'); if (stopAnim) stopAnim(); v.remove(); };
+    render(1);
+  }
+
   /* ---------- Gyakorlás menü ---------- */
   function modeTiles() {
     const nT = (window.JOG_TESZT || []).length;
     const tile = (href, ic, mc, t, d, n) => `<a class="mode reveal" href="${href}" style="--mc:${mc}"><div class="ic">${ic}</div><div class="t">${t}</div><div class="d">${d}</div><div class="n">${n}</div></a>`;
     return `<div class="grid grid-3">
+      ${tile('#/sztori/' + TEMAK[0].id, '▶️', '#bf5af2', 'Fókusz mód', 'A leckék sztoriként: egyszerre egy kártya, a pontok egyenként jönnek elő, közben gyors kérdések.', 'ADHD-barát')}
       ${tile('#/kviz?mode=mix', '🎲', '#5e5ce6', 'Vegyes kvíz', '20 véletlen kérdés az összes témából, azonnali magyarázattal.', `${BANK.length} kérdésből`)}
       ${tile('#/kviz?mode=hibak', '🎯', '#ff375f', 'Hibáim', 'Csak azok, amiket elrontottál. Ha jól válaszolsz, kikerül a listáról.', `${S.wrong.length} vár rád`)}
       ${tile('#/zh', '⏱️', '#ff9f0a', 'ZH-szimuláció', '30 kérdés, 30 perc, magyarázat csak a végén — mint élesben. Becsült jeggyel.', 'Vizsga-mód')}
