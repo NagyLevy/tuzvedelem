@@ -1,0 +1,139 @@
+# Claude-nak — átadó a Jogi ismeretek ZH-gyakorlóhoz
+
+> Ezt a fájlt másold be egy új Claude Code munkamenet elejére (vagy írd neki: „olvasd el a `Jog/Claude-nak.md`-t, és folytasd”).
+> Minden, amit tudnod kell a folytatáshoz, itt van.
+
+## Kinek és miért
+
+- Egyetemi ZH-gyakorló a **Jogi ismeretek** tárgyhoz (Széchenyi István Egyetem, DKNB_JETM001, 2026/27 ősz).
+- **Az elővizsga 2026-11-26-án van, feleletválasztós.** A felhasználó egy előadáson sem volt bent, ezért a tanulásnak nagyon egyszerűnek kell lennie.
+- Hangnem: magyar, laikusnak szóló („laymans terms”), rövid, de tartalmilag pontos. Hasonlatokkal.
+- Design: „Apple prémium” — üveghatás, nagy tipográfia, rugós animációk, sötét és világos mód, mobilbarát.
+
+## Hol van
+
+- Repo: https://github.com/NagyLevy/tuzvedelem. Az app a **`Jog/`** almappában van; a gyökér a meglévő Tűzvédelem-oldal, azt csak indokolt esetben módosítsd.
+- Ág: **`jog-gyakorlo`**. A `main`-re merge-elni csak a tulajdonos kérésére szabad. A GitHub Pages a `main`-ről megy, a cím `https://nagylevy.github.io/tuzvedelem/Jog/`.
+- Nincs build. Sima `<script>` tagek, ezért `file://`-ról is fut. Helyi szerver:
+  ```
+  python -m http.server 8765 --directory <repo gyökér>
+  ```
+  majd nyisd meg: http://localhost:8765/Jog/index.html
+
+## Felépítés
+
+```
+Jog/
+  index.html          oldalváz + script-sorrend (?v=N cache-busting: módosítás után emeld!)
+  css/jog.css         teljes design (tokenek a :root-on, sötét mód, animációk)
+  js/fx.js            FX.words (szavanként felúszó cím), FX.reveal (görgetésre megjelenés), FX.rings, konfetti
+  js/app.js           hash-router + összes nézet + kvízmotor + localStorage
+  data/temak.js       JOG_TEMAK — 11 téma: id, szín, ikon, rövid név
+  data/jogteszt-1..3.js  JOG_TESZT — a jogteszt.pdf mind a 215 kérdése (n: 1–215)
+  data/kurzus.js      JOG_KURZUS — 159 kérdés a COEDU kurzus önellenőrzőiből (GENERÁLT, ne kézzel szerkeszd)
+  data/leckek/01-alap.js … 11-fogyaszto.js   JOG_LECKEK — a 11 lecke
+  tools/parse_course.py  a kurzus-zip lesson*.html fájljaiból generálja a kurzus.js-t
+  source/             minden eredeti anyag (diák, pdf-ek, jogteszt.pdf, kurzus-zip, .impera)
+```
+
+**Témák id-i** (a kérdések `t` mezője ezekre mutat):
+`alap, alkotmany, allamszerv, birosag, munka, polgari1, polgari2, bunteto, nemzetkozi, kozig, fogyaszto`
+
+### Kérdés-séma
+
+```js
+{ n: 7,                 // csak a jogtesztnél (a bankban 'j7' id-vel); kurzusnál id: 'k5B303A23'
+  t: 'birosag',         // téma id
+  q: 'Kérdés…',
+  o: ['A opció', 'B opció', …],
+  a: [2],               // a helyes opciók indexei; ha több elem van, többválaszos (checkbox + „Ellenőrzés”)
+  x: 'Magyarázat laikusnak, 1–3 mondat.',
+  old: 'A régi teszt még X-et jelölte, mert …'   // opcionális: ha a mai jog eltér a régi tesztkulcstól
+}
+```
+
+- Az opciókat a kvíz összekeveri, ezért a kérdés és a magyarázat **ne hivatkozzon betűre** („a B válasz…”).
+- Az `old` szöveg a kijelzésben „Régen:” előtagot kap, kivéve, ha maga is „Régen / A régi / évszám” szóval kezdődik.
+
+### Lecke-séma
+
+```js
+window.JOG_LECKEK = (window.JOG_LECKEK || []).concat([{
+  id: 'munka', perc: 6,
+  egyMondat: 'Az egész téma egy mondatban (HTML, <b> kiemelés).',
+  kartyak: [{ k: 'címke', cim: 'Kártya címe', html: '<ul><li>…</li></ul>', hasonlat: 'opcionális' }],
+  szamok:  [{ v: '30 nap', l: 'mire vonatkozik' }],   // → Számok oldal + villámkártyák
+  csapdak: ['Tipikus beugrató, HTML'],
+  mini:    ['j123', 'k5B303A23', 'j7']                // 3 kérdés-id a lecke végi mini-kvízhez, a saját témájából
+}]);
+```
+
+### Nézetek (hash-router, `js/app.js`)
+
+| Hash | Mi |
+|---|---|
+| `#/` | Áttekintés: hero, statisztika, téma-gyűrűk, módok |
+| `#/leckek`, `#/lecke/:id` | Lecke: Egy mondatban → kártyák → 🔢 Számok → ⚠️ Csapdák → mini-kvíz |
+| `#/gyakorlas` | módválasztó (forrás: mind / jogteszt / kurzus) |
+| `#/kviz?mode=mix\|hibak\|teszt&t=<téma>&src=` | kvíz azonnali visszajelzéssel, magyarázattal és „Nem érted? → lecke” linkkel |
+| `#/zh` | ZH-szimuláció: 30 kérdés, időre, visszajelzés nélkül, a végén jegy (50/63/75/87%) |
+| `#/kartya?t=` | villámkártyák (Szóköz = fordít, ← nem tudtam, → tudtam) |
+| `#/szamok` | az összes szám témánként |
+
+- Haladás: `localStorage['jog.v1']` = `{seen:{id:{ok,bad,last}}, wrong:[id…], best, flash}`.
+- Téma: `localStorage['jog.theme']`.
+- Billentyűk: 1–9 vagy A–I = válasz, Enter / → = tovább.
+
+## Eldöntött tartalmi szabályok (fontos!)
+
+1. **A mai hatályos jog a helyes válasz.** Ha a régi jogteszt-kulcs mást jelölt, a kérdés `old` mezőben megkapja a régi választ és az okát.
+2. **A 2026-os, „hatályosított” előadásdia a mérvadó** (`source/Alkotmanybirosag-…_2026_hatalyositott.pptx`):
+   - AB-tagok: **9 évre** (a 2026. július 19. előtt választottak 12 évre), 2/3-dal választja az OGY. Az AB **elnökét maga az AB** választja, 3 évre.
+   - Kúria elnöke és OBH elnöke: **6 év**. Legfőbb ügyész: **9 év**. Ombudsman (AJBH): **6 év**.
+   - Új szerv: NVVH (lásd a dián).
+3. Egyéb, az előadáshoz igazított tények:
+   - Munkaszerződés kötelező elemei: felek adatai, munkakör, alapbér, munkavégzés helye.
+   - Termék, termény, szaporulat elsajátítása = **származékos** szerzésmód.
+   - Elbirtoklás: ingó 10 év, ingatlan 15 év.
+   - Az előadás szerint az **Alaptörvény „nem jogszabály”** (a jogszabályok fölött áll).
+   - j97 → a:[0,1,2] (az előadás szerint).
+   - j211 → a Statútum 38. cikkére szűkítve; a magyarázat jelzi, hogy az előadás tágabb listát ad.
+4. A kurzus fogyasztóvédelmi önellenőrzője a régi szabályt kérdezi (6 hónapos vélelem a jótállásnál). Ez a lecke csapdái közt szerepel.
+
+## A .impera fájlok
+
+- `source/*.impera` (3 db): az Impera nevű tesztelő app titkosított kérdéscsomagjai (a Moodle „Proszeminárium” kurzusból, valószínűleg minta-ZH-k).
+- **Nem törtük fel, és ne is próbáld** (jelszót se fejts vissza).
+- Ha a felhasználó megnyitja őket az Impera appban, és bemásolja vagy képernyőképen megmutatja a kérdéseket, akkor ezeket kell felvinni:
+  - új fájlba, pl. `data/impera.js`, `src: 'impera'` mezővel és `i…` id-kkel;
+  - a bankba és a forrásválasztóba be kell kötni (`app.js`: BANK összeállítás és a gyakorlás-nézet src-gombjai).
+
+## Ellenőrzés módosítás után
+
+```bash
+node --check Jog/js/app.js
+```
+
+Gyors adat-validáció böngésző-konzolból (az oldalon):
+
+```js
+[...JOG_TESZT, ...JOG_KURZUS].filter(q => !q.o || !q.a.length || q.a.some(i => i >= q.o.length) || !JOG_TEMAK.some(t => t.id === q.t)).length  // 0 kell
+JOG_LECKEK.flatMap(l => l.mini).filter(id => !(/^j\d+$/.test(id) ? JOG_TESZT.some(q => 'j' + q.n === id) : JOG_KURZUS.some(q => q.id === id))).length  // 0 kell
+```
+
+Utolsó állapot (2026-11-25):
+- 215 + 159 kérdés, 0 hibás, a 11 lecke kész.
+- Böngészőben végigtesztelve: főoldal, lecke, kvíz, többválaszos, Hibáim, ZH-szimuláció, villámkártya, Számok, mobil, sötét és világos mód. Konzolhiba nincs.
+
+## Ami még hátravan / ötletek
+
+- [ ] **.impera kérdések felvitele**, ha a felhasználó átadja a szövegüket (lásd fent).
+- [ ] Merge `jog-gyakorlo` → `main`, hogy élesben is elérhető legyen (csak a tulajdonos kérésére!).
+- [ ] Opcionális: „csak a gyengéim” mód a mastery alapján; témánkénti ZH-szimuláció; PWA/offline.
+- [ ] Ha a felhasználó új diát vagy minta-ZH-t hoz, a tényeket a 2. pont szerint egyeztesd, és ahol eltér, `old` megjegyzést írj.
+
+## Munkastílus, amit a felhasználó kért
+
+- Magyarul válaszolj, röviden.
+- Commit üzenet végére: `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>` (vagy amelyik modell vagy).
+- `main`-re pusholni vagy merge-elni csak kérésre.

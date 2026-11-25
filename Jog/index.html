@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Jogi ismeretek</title>
+  <meta name="description" content="Jogi ismeretek ZH-gyakorló: rövid, érthető leckék, ~375 feleletválasztós kérdés, hibák ismétlése, villámkártyák és ZH-szimuláció." />
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%235e5ce6'/%3E%3Cstop offset='1' stop-color='%230a84ff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='15' fill='url(%23g)'/%3E%3Cpath d='M32 13v38M20 51h24M16 22h32M16 22l-7 15a7 7 0 0 0 14 0zM48 22l-7 15a7 7 0 0 0 14 0z' stroke='white' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/jog.css?v=1" />
+</head>
+<body>
+  <div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
+
+  <header class="nav" id="nav">
+    <a class="brand" href="#/" aria-label="Kezdőlap">
+      <span class="logo" aria-hidden="true">
+        <svg viewBox="0 0 64 64"><path d="M32 13v38M20 51h24M16 22h32M16 22l-7 15a7 7 0 0 0 14 0zM48 22l-7 15a7 7 0 0 0 14 0z"/></svg>
+      </span>
+      <span>Jogi ismeretek</span>
+    </a>
+    <nav class="nav-links" id="navLinks">
+      <a href="#/" data-nav="home">Áttekintés</a>
+      <a href="#/leckek" data-nav="leckek">Leckék</a>
+      <a href="#/gyakorlas" data-nav="gyakorlas">Gyakorlás</a>
+      <a href="#/szamok" data-nav="szamok">Számok</a>
+    </nav>
+    <button class="icon-btn" id="themeBtn" aria-label="Világos / sötét mód" title="Világos / sötét mód">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z"/></svg>
+    </button>
+  </header>
+
+  <main id="app" tabindex="-1"></main>
+
+  <nav class="tabbar" id="tabbar" aria-label="Fő menü">
+    <a href="#/" data-nav="home"><svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1z"/></svg><span>Áttekintés</span></a>
+    <a href="#/leckek" data-nav="leckek"><svg viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM4 21V5M8 7h7"/></svg><span>Leckék</span></a>
+    <a href="#/gyakorlas" data-nav="gyakorlas"><svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z"/></svg><span>Gyakorlás</span></a>
+    <a href="#/szamok" data-nav="szamok"><svg viewBox="0 0 24 24"><path d="M5 9h14M5 15h14M10 4L8 20M16 4l-2 16"/></svg><span>Számok</span></a>
+  </nav>
+
+  <footer class="foot">
+    <p>Jogi ismeretek · ZH-gyakorló · Forrás: az előadások diasorai, a COEDU „Jogi ismeretek” kurzus és a jogteszt.pdf (a régi teszt válaszai a mai jog szerint javítva).</p>
+    <p class="muted">A haladásod csak ebben a böngészőben tárolódik. · <a href="../">← Tűz- és munkavédelem</a></p>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <canvas class="confetti" id="confetti" aria-hidden="true"></canvas>
+
+  <!-- Classic scripts: dupla kattintással (file://) is működik, szerver nélkül. -->
+  <script src="data/temak.js?v=1"></script>
+  <script src="data/jogteszt-1.js?v=1"></script>
+  <script src="data/jogteszt-2.js?v=1"></script>
+  <script src="data/jogteszt-3.js?v=1"></script>
+  <script src="data/kurzus.js?v=1"></script>
+  <script src="data/leckek/01-alap.js?v=1"></script>
+  <script src="data/leckek/02-alkotmany.js?v=1"></script>
+  <script src="data/leckek/03-allamszerv.js?v=1"></script>
+  <script src="data/leckek/04-birosag.js?v=1"></script>
+  <script src="data/leckek/05-munka.js?v=1"></script>
+  <script src="data/leckek/06-polgari1.js?v=1"></script>
+  <script src="data/leckek/07-polgari2.js?v=1"></script>
+  <script src="data/leckek/08-bunteto.js?v=1"></script>
+  <script src="data/leckek/09-nemzetkozi.js?v=1"></script>
+  <script src="data/leckek/10-kozig.js?v=1"></script>
+  <script src="data/leckek/11-fogyaszto.js?v=1"></script>
+  <script src="js/fx.js?v=1"></script>
+  <script src="js/app.js?v=1"></script>
+</body>
+</html>

@@ -12,6 +12,12 @@ Animált, ZH-felkészítő tanulóoldal a Tűz- és munkavédelem tárgyhoz.
 
 Kb. 850 kérdés a teljes anyagból (2–11. diasor + tesztkérdés-bank).
 
+## ⚖️ Jogi ismeretek (új, a `Jog/` mappában)
+Külön ZH-gyakorló a *Jogi ismeretek* tárgyhoz: 11 rövid, közérthető lecke, villámkártyák, kvíz azonnali magyarázattal, Hibáim, ZH-szimuláció.
+A jogteszt.pdf mind a 215 kérdése benne van, plusz 159 kérdés a kurzus önellenőrzőiből.
+
+**▶ Itt:** https://nagylevy.github.io/tuzvedelem/Jog/ · továbbfejlesztéshez: [`Jog/Claude-nak.md`](Jog/Claude-nak.md)
+
 ## Futtatás helyben
 Nincs build, nincs telepítés: töltsd le, és nyisd meg az `index.html`-t a böngészőben.
 A haladás a böngésző helyi tárolójában (localStorage) marad.

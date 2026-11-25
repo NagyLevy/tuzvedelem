@@ -1,0 +1,37 @@
+/* 1. lecke — Jogtani alapfogalmak (forrás: Jogtani-alapfogalmak.pdf + kurzus 1–2. lecke) */
+window.JOG_LECKEK = (window.JOG_LECKEK || []).concat([{
+  id: 'alap',
+  perc: 6,
+  egyMondat: 'A jog <b>kötelező</b> magatartási szabályok összessége, amelyeket <b>az állam alkot</b> (vagy ismer el), és ha nem tartod be, <b>állami kényszerrel</b> érvényesítik.',
+  kartyak: [
+    { k: 'Alapfogalom', cim: 'Mi a jog?', html: '<p>Szabályok, amik <b>mindenkire kötelezők</b>, <b>az államtól</b> erednek, és ha megszeged, jön a <b>szankció</b>. Ettől más, mint az illem vagy az erkölcs: azt senki nem kényszeríti ki rendőrrel.</p><ul><li>A jog is <b>norma</b> (= magatartási szabály), csak a legerősebb fajta.</li></ul>', hasonlat: 'Az illem az, hogy köszönsz. A jog az, hogy nem lopsz — mert ha igen, jön a rendőr.' },
+    { k: 'Két jelentés', cim: 'Alanyi jog vs. tárgyi jog', html: '<ul><li><b>Tárgyi jog</b> = maga a szabály, a <b>jogszabályok összessége</b> (pl. a Ptk.).</li><li><b>Alanyi jog</b> = <b>a te jogosultságod</b>, ami a szabályból következik (pl. „jogom van fellebbezni”).</li></ul>', hasonlat: 'Tárgyi jog = a társasjáték szabálykönyve. Alanyi jog = hogy te most dobhatsz.' },
+    { k: 'Keletkezés', cim: 'Írott vs. íratlan jog', html: '<ul><li><b>Írott</b>: az <b>állami jogalkotó</b> hozza létre, előírt eljárásban, kihirdetve (pl. törvény). Ez a <b>kontinentális</b> (nálunk is ez van).</li><li><b>Íratlan</b>: a <b>jogalkalmazás</b> során születik — bírói precedens, szokásjog. Ez az <b>angolszász</b> (common law).</li></ul>', hasonlat: 'Írott = recept a szakácskönyvben. Íratlan = „nagyi mindig így csinálta”.' },
+    { k: 'Még két pár', cim: 'Élő jog / papírjog · pozitív jog / természetjog', html: '<ul><li><b>Élő jog</b>: tényleg betartják. <b>Papírjog</b>: le van írva, de senki nem alkalmazza.</li><li><b>Pozitív jog</b>: amit az állam alkotott/elismert → jogbiztonság.</li><li><b>Természetjog</b>: az emberi természetből (erkölcs, vallás, ész) fakadó követelmények, amiknek a pozitív jognak meg kellene felelnie.</li></ul>' },
+    { k: 'A szabály anatómiája', cim: 'Hipotézis → diszpozíció → szankció', html: '<ul><li><b>Hipotézis</b>: <i>ha</i> ez a helyzet…</li><li><b>Diszpozíció</b>: …<i>akkor így kell</i> viselkedni (tenni, nem tenni, tűrni)…</li><li><b>Szankció / jogkövetkezmény</b>: …<i>különben</i> ez történik.</li></ul><p>Néha a hipotézis és a diszpozíció összeolvad: „Aki mást megöl, 5–15 évig terjedő szabadságvesztéssel büntetendő.”</p>', hasonlat: 'HA piros a lámpa, AKKOR állj meg, KÜLÖNBEN bírság.' },
+    { k: 'Jellemzők', cim: 'A jogi norma 6 tulajdonsága', html: '<ul><li><b>Érvényesség</b> — mentes a súlyos hibáktól</li><li><b>Általánosság</b> — mindenkire vonatkozik a körben</li><li><b>Ismételtség</b> — minden hasonló esetben ugyanúgy</li><li><b>Szankcionáltság</b> — megszegése hátránnyal jár</li><li><b>Hipotetikus szerkezet</b> — jövőbeli helyzetre szól</li><li><b>Reciprocitás</b> — jognak kötelesség felel meg</li></ul>' },
+    { k: 'Méret szerint', cim: 'Jogtétel < norma < jogszabály < jogrendszer < jogcsalád', html: '<ul><li><b>Jogi norma</b>: a jog legkisebb önálló értelmű egysége.</li><li><b>Jogszabály</b>: normák csomagja, előírt eljárásban, formában, néven (pl. Btk., Ptk.).</li><li><b>Jogrendszer</b>: egy államban adott időpontban hatályos összes jogszabály.</li><li><b>Jogcsalád</b>: hasonló jogrendszerek csoportja — <b>a legmagasabb kategória</b>.</li></ul>', hasonlat: 'Mondat < fejezet < könyv < könyvtár < műfaj.' },
+    { k: 'Érvényes ≠ hatályos', cim: 'Érvényesség és hatály', html: '<p><b>Érvényes</b>, ha: az arra jogosult szerv alkotta, a hatáskörében, beleillik a jogforrási hierarchiába, betartották az eljárást, és <b>szabályszerűen kihirdették</b>.</p><p><b>Hatály</b> = mikor, hol, kire alkalmazható: <b>időbeli, területi, személyi</b>.</p><p>Minden hatályos jogszabály érvényes — de nem minden érvényes hatályos (pl. kihirdették, de csak jövőre lép hatályba).</p>' },
+    { k: 'Felépítés', cim: 'Közjog vs. magánjog', html: '<ul><li><b>Közjog</b>: az egyik oldalon <b>az állam</b> áll, <b>alá-fölérendeltség</b>, <b>kógens</b> (nem lehet eltérni). Pl. alkotmányjog, közigazgatási, pénzügyi, büntetőjog, eljárásjogok.</li><li><b>Magánjog</b>: <b>egyenrangú felek</b>, <b>mellérendeltség</b>, <b>diszpozitív</b> (közös akarattal el lehet térni). Pl. polgári jog, kereskedelmi jog.</li><li><b>Vegyes</b>: munkajog, versenyjog, fogyasztóvédelem, környezetvédelem, tb-jog.</li></ul>', hasonlat: 'Közjog: a tanár és a diák. Magánjog: két diák alkudozik a szendvicsen.' },
+    { k: 'Jogcsaládok', cim: 'Kontinentális, common law, szocialista', html: '<ul><li><b>Római-germán (kontinentális)</b>: <b>írott jog</b> elsőbbsége, elvont, általános szabályok. Ilyen Magyarország.</li><li><b>Common law (angolszász)</b>: <b>a bíró által alkotott jog</b> (precedens) a kiemelt.</li><li><b>Szocialista</b>: a jogot <b>a politika közvetlenül irányítja</b>.</li></ul>' },
+    { k: 'Működés', cim: 'Jogkövetés → jogérvényesítés → jogalkalmazás', html: '<ul><li><b>Jogkövetés</b>: önként betartod (ez a tipikus, pl. KRESZ).</li><li><b>Jogérvényesítés</b>: ha nem tartod be, az állam kikényszeríti.</li><li><b>Jogalkalmazás</b> (bíróság) lépései: 1) jogszabályok áttekintése → 2) <b>tényállás megállapítása</b> → 3) bizonyítás → 4) <b>jogszabály értelmezése</b> → 5) <b>döntés</b> (ítélet, határozat).</li></ul>' },
+    { k: 'Értelmezés', cim: 'Jogértelmezés, joghézag', html: '<ul><li>Módszerek: <b>nyelvtani</b> és <b>logikai</b> (alsó szint), <b>rendszertani</b>, <b>történeti</b>.</li><li>Eredménye: <b>megszorító</b> vagy <b>kiterjesztő</b>.</li><li><b>Joghézag</b>: a bíró nem talál szabályt a tényálláshoz → csak kivételesen tölthető ki <b>analógiával</b>.</li></ul>' },
+    { k: 'Jogviszony', cim: 'Alany, tárgy, tartalom', html: '<p><b>Jogviszony</b> = nevesített jogalanyok közötti, jogilag szabályozott kapcsolat (pl. hallgatói jogviszony).</p><ul><li><b>Alanyai</b>: természetes személy, jogi személy, állam.</li><li><b>Tárgya</b>: egy <b>magatartás</b> — tevés, nem tevés, tűrés.</li><li><b>Tartalma</b>: a feleket megillető <b>jogok és kötelezettségek</b>.</li></ul>', hasonlat: 'Albérlet: alany = te és a főbérlő, tárgy = a fizetés és a lakás átengedése, tartalom = ki mit köteles és mit tehet.' }
+  ],
+  szamok: [
+    { v: '3', l: 'eleme van a jogi normának (hipotézis, diszpozíció, szankció)' },
+    { v: '3', l: 'fajta hatály: időbeli, területi, személyi' },
+    { v: '6', l: 'tulajdonsága van a jogi normának' },
+    { v: '5', l: 'szakasza van a bírósági jogalkalmazásnak' },
+    { v: '1514', l: 'Werbőczy Tripartituma — szokásjogi gyűjtemény' }
+  ],
+  csapdak: [
+    'A <b>preambulum</b> (bevezető) <b>NEM</b> a jogi norma szerkezeti eleme. A három elem: hipotézis, diszpozíció, szankció — ebben a sorrendben.',
+    '„Minden <b>hatályos</b> jogszabály érvényes” — <b>igaz</b>. Fordítva nem: egy érvényes szabály még lehet, hogy nem hatályos.',
+    'Az <b>országgyűlési határozat</b> <b>nem jogszabály</b>, csak közjogi szervezetszabályozó eszköz (belső utasítás jellegű).',
+    '<b>Kógens</b> = kötelező, nem lehet eltérni (közjog). <b>Diszpozitív</b> = a felek eltérhetnek (magánjog). Könnyű összekeverni!',
+    'A <b>jogcsalád</b> a legmagasabb kategória — nagyobb, mint a jogrendszer.',
+    'Werbőczy Tripartituma <b>szokásjogi gyűjtemény</b>, nem törvény (az országgyűlés sosem fogadta el hivatalosan).'
+  ],
+  mini: ['j38', 'k6D72658F', 'j39']
+}]);
