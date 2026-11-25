@@ -426,3 +426,60 @@ button { font: inherit; color: inherit; }
   .flash-acts .btn .kbd { display: none; }
   .flash-acts .btn { white-space: nowrap; }
 }
+
+/* ---------- Mit kérdeznek? (lecke végi kérdés–válasz lista) ---------- */
+.qa-list { display: grid; gap: 10px; }
+.qa { padding: 16px 18px; border-radius: var(--r-lg); background: var(--surface); border: 1px solid var(--hair); }
+.qa-q { font-weight: 650; letter-spacing: -0.01em; line-height: 1.4; }
+.qa-q .pill { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 99px; font-size: 11px; font-weight: 700; background: color-mix(in srgb, var(--tc) 14%, transparent); color: var(--tc); vertical-align: 2px; }
+.qa-a { list-style: none; margin: 8px 0 0; padding: 0; }
+.qa-a li { position: relative; padding: 4px 0 4px 26px; color: var(--good); font-weight: 600; line-height: 1.4; }
+.qa-a li::before { content: '✓'; position: absolute; left: 4px; top: 4px; font-weight: 800; }
+.qa-no { margin-top: 6px; font-size: 13px; color: var(--ink-3); line-height: 1.45; }
+.qa details { margin-top: 8px; }
+.qa summary { cursor: pointer; font-size: 13px; font-weight: 700; color: var(--tc); list-style: none; }
+.qa summary::-webkit-details-marker { display: none; }
+.qa summary::before { content: '▸ '; display: inline-block; transition: transform 0.2s; }
+.qa details[open] summary::before { transform: rotate(90deg); }
+.qa details p { margin: 6px 0 0; font-size: 14px; color: var(--ink-2); line-height: 1.5; }
+.qa details .old::before { content: '⚠️ '; }
+
+/* ---------- Animált ábrák („videók”) ---------- */
+.anims { display: grid; gap: 18px; }
+.anim { padding: clamp(18px, 4vw, 28px); border-radius: var(--r-xl); background: var(--surface); border: 1px solid var(--hair); box-shadow: var(--shadow-1); }
+.anim-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 18px; }
+.anim-head .h-card { margin: 0; }
+.anim-ctl { display: flex; gap: 6px; flex-shrink: 0; }
+.anim-ctl .ab { width: 38px; height: 38px; border-radius: 50%; border: 0; cursor: pointer; font-size: 14px; font-weight: 800; background: var(--tc); color: #fff; transition: transform 0.2s var(--spring); }
+.anim-ctl .ab:active { transform: scale(0.9); }
+.anim-ctl .ab.redo { background: color-mix(in srgb, var(--tc) 14%, transparent); color: var(--tc); font-size: 17px; }
+.anim .st { cursor: pointer; opacity: 0; transform: translateY(14px) scale(0.97); transition: opacity 0.5s var(--ease), transform 0.6s var(--spring), box-shadow 0.3s, background 0.3s; }
+.anim .st.in { opacity: 0.72; transform: none; }
+.anim .st.cur { opacity: 1; box-shadow: 0 0 0 2px var(--tc), var(--shadow-1); }
+.anim .st b { display: block; font-size: 15px; letter-spacing: -0.01em; line-height: 1.3; }
+.anim .st span { display: block; font-size: 12.5px; color: var(--ink-2); line-height: 1.35; margin-top: 2px; }
+/* piramis */
+.t-piramis { display: grid; gap: 8px; justify-items: center; }
+.t-piramis .st { width: min(100%, max(var(--w), 190px)); padding: 11px 14px; text-align: center; border-radius: 14px; background: color-mix(in srgb, var(--tc) 16%, var(--surface)); }
+/* lánc */
+.t-lanc { display: grid; }
+.t-lanc .st { position: relative; display: grid; grid-template-columns: 30px 1fr; gap: 12px; align-items: start; padding: 10px 12px; border-radius: 14px; }
+.t-lanc .dot { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--tc); color: #fff; font-size: 13px; font-weight: 800; }
+.t-lanc .st:not(:last-child)::after { content: ''; position: absolute; left: 26px; top: 42px; bottom: -10px; width: 2px; background: color-mix(in srgb, var(--tc) 35%, transparent); }
+/* nyíl: ki → kit */
+.t-nyil { display: grid; gap: 8px; }
+.t-nyil .st { display: grid; grid-template-columns: minmax(64px, 0.8fr) minmax(52px, 0.7fr) minmax(0, 2fr); align-items: center; gap: 10px; padding: 12px; border-radius: 14px; background: color-mix(in srgb, var(--tc) 7%, transparent); }
+.anim .t-nyil .from { display: block; margin: 0; padding: 5px 8px; border-radius: 99px; background: var(--surface); border: 1px solid var(--hair); font-size: 12.5px; font-weight: 700; text-align: center; color: var(--ink); }
+.anim .t-nyil .arr { position: relative; display: block; height: 2px; margin: 0; background: var(--tc); transform-origin: left; transform: scaleX(0); transition: transform 0.7s var(--ease) 0.15s; }
+.t-nyil .st.in .arr { transform: scaleX(1); }
+.t-nyil .arr::after { content: ''; position: absolute; right: -1px; top: -4px; border-left: 8px solid var(--tc); border-top: 5px solid transparent; border-bottom: 5px solid transparent; }
+.t-nyil .arr em { position: absolute; left: 50%; bottom: 6px; transform: translateX(-50%); font-style: normal; font-size: 11px; font-weight: 800; color: var(--tc); white-space: nowrap; }
+.anim .t-nyil .to { margin: 0; font-size: inherit; color: var(--ink); }
+/* narráció + idősáv */
+.anim-cap { display: flex; gap: 10px; align-items: flex-start; min-height: 4.6em; padding: 12px 14px; border-radius: var(--r-md); background: color-mix(in srgb, var(--tc) 8%, transparent); }
+.anim-cap .n { min-width: 30px; padding-top: 3px; font-size: 12px; font-weight: 800; color: var(--tc); }
+.anim-cap p { margin: 0; font-size: 15px; line-height: 1.5; color: var(--ink); }
+.anim-cap p.fade { animation: capIn 0.45s var(--ease); }
+@keyframes capIn { from { opacity: 0; transform: translateY(6px); } }
+.anim-bar { height: 3px; margin: 10px 0 16px; border-radius: 3px; background: var(--hair); overflow: hidden; }
+.anim-bar i { display: block; height: 100%; width: 0; background: var(--tc); transition: width 0.5s var(--ease); }

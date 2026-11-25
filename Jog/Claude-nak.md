@@ -31,6 +31,8 @@ Jog/
   data/temak.js       JOG_TEMAK — 11 téma: id, szín, ikon, rövid név
   data/jogteszt-1..3.js  JOG_TESZT — a jogteszt.pdf mind a 215 kérdése (n: 1–215)
   data/kurzus.js      JOG_KURZUS — 159 kérdés a COEDU kurzus önellenőrzőiből (GENERÁLT, ne kézzel szerkeszd)
+  data/kurzus-x.js    JOG_KURZUS_X — kézzel írt magyarázat mind a 159 kurzus-kérdéshez ({id: 'szöveg'} vagy {x, old})
+  data/animaciok.js   JOG_ANIM — animált „videó” ábrák leckénként (piramis / lanc / nyil típus, lépésenkénti narrációval)
   data/leckek/01-alap.js … 11-fogyaszto.js   JOG_LECKEK — a 11 lecke
   tools/parse_course.py  a kurzus-zip lesson*.html fájljaiból generálja a kurzus.js-t
   source/             minden eredeti anyag (diák, pdf-ek, jogteszt.pdf, kurzus-zip, .impera)
@@ -73,7 +75,7 @@ window.JOG_LECKEK = (window.JOG_LECKEK || []).concat([{
 | Hash | Mi |
 |---|---|
 | `#/` | Áttekintés: hero, statisztika, téma-gyűrűk, módok |
-| `#/leckek`, `#/lecke/:id` | Lecke: Egy mondatban → kártyák → 🔢 Számok → ⚠️ Csapdák → mini-kvíz |
+| `#/leckek`, `#/lecke/:id` | Lecke: Egy mondatban → 🎬 animált ábrák → kártyák → 🔢 Számok → ⚠️ Csapdák → 📋 Mit kérdeznek? (a téma összes kérdése a jó válasszal) → mini-kvíz |
 | `#/gyakorlas` | módválasztó (forrás: mind / jogteszt / kurzus) |
 | `#/kviz?mode=mix\|hibak\|teszt&t=<téma>&src=` | kvíz azonnali visszajelzéssel, magyarázattal és „Nem érted? → lecke” linkkel |
 | `#/zh` | ZH-szimuláció: 30 kérdés, időre, visszajelzés nélkül, a végén jegy (50/63/75/87%) |
@@ -98,7 +100,8 @@ window.JOG_LECKEK = (window.JOG_LECKEK || []).concat([{
    - Az előadás szerint az **Alaptörvény „nem jogszabály”** (a jogszabályok fölött áll).
    - j97 → a:[0,1,2] (az előadás szerint).
    - j211 → a Statútum 38. cikkére szűkítve; a magyarázat jelzi, hogy az előadás tágabb listát ad.
-4. A kurzus fogyasztóvédelmi önellenőrzője a régi szabályt kérdezi (6 hónapos vélelem a jótállásnál). Ez a lecke csapdái közt szerepel.
+4. A **kurzus-kérdések kulcsát nem írjuk át** (a ZH valószínűleg abból jön). Ahol a mai jog eltér (k7F0315A5, k343A5A6D), a `kurzus-x.js` `old` mezője jelzi.
+5. A kurzus fogyasztóvédelmi önellenőrzője a régi szabályt kérdezi (6 hónapos vélelem a jótállásnál). Ez a lecke csapdái közt szerepel.
 
 ## A .impera fájlok
 

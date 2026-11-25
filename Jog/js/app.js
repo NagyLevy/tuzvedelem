@@ -4,6 +4,7 @@
   const FX = window.FX;
   const TEMAK = window.JOG_TEMAK;
   const LECKEK = window.JOG_LECKEK || [];
+  const ANIM = window.JOG_ANIM || {};
   const T = Object.fromEntries(TEMAK.map((t) => [t.id, t]));
   const L = Object.fromEntries(LECKEK.map((l) => [l.id, l]));
   const app = document.getElementById('app');
@@ -16,7 +17,8 @@
   /* ---------- Kérdésbank ---------- */
   const BANK = [
     ...(window.JOG_TESZT || []).map((q) => ({ ...q, id: 'j' + q.n, src: 'teszt' })),
-    ...(window.JOG_KURZUS || []),
+    /* a kurzus-kérdések magyarázata külön fájlban van (kurzus.js generált): JOG_KURZUS_X[id] = 'szöveg' vagy {x, old} */
+    ...(window.JOG_KURZUS || []).map((q) => { const e = (window.JOG_KURZUS_X || {})[q.id]; return e ? { ...q, ...(typeof e === 'string' ? { x: e } : e) } : q; }),
   ];
   const BY_ID = Object.fromEntries(BANK.map((q) => [q.id, q]));
   /* „régen” megjegyzés: ha a szöveg maga nem a régi szabályra utal, elé tesszük, hogy „Régen:” */
@@ -118,6 +120,7 @@
     setTone(t.c);
     const idx = TEMAK.indexOf(t), prev = TEMAK[idx - 1], next = TEMAK[idx + 1];
     const qs = topicQs(id);
+    const anims = ANIM[id] || [];
     if (!l) {
       mount(`<div class="wrap"><div class="empty"><div class="e">${t.g}</div><h2>${esc(t.title)}</h2><p>Ehhez a témához még nincs lecke, de ${qs.length} kérdéssel gyakorolhatsz.</p><a class="btn tc" href="#/kviz?t=${id}">Gyakorlás</a></div></div>`);
       return;
@@ -131,14 +134,18 @@
         <div class="one-liner reveal" id="lenyeg">${l.egyMondat}</div>
       </section>
       <div class="toc"><div class="seg">
-        <button data-go="lenyeg">Lényeg</button><button data-go="kartyak">Kártyák</button>${l.szamok && l.szamok.length ? '<button data-go="szamok">Számok</button>' : ''}<button data-go="csapdak">Csapdák</button><button data-go="minikviz">Kvíz</button>
+        <button data-go="lenyeg">Lényeg</button>${anims.length ? '<button data-go="videok">Videók</button>' : ''}<button data-go="kartyak">Kártyák</button>${l.szamok && l.szamok.length ? '<button data-go="szamok">Számok</button>' : ''}<button data-go="csapdak">Csapdák</button><button data-go="kerdesek">Kérdések</button><button data-go="minikviz">Kvíz</button>
       </div></div>
+      ${anims.length ? `<section class="sec" id="videok"><div class="sec-head"><h2 class="h-sec reveal">🎬 Nézd meg mozgásban</h2><p class="lead reveal">Rövid, magától lejátszódó ábrák. Bármelyik lépésre rákattinthatsz, a ↻ újraindítja.</p></div>
+        <div class="anims">${anims.map(animBlock).join('')}</div></section>` : ''}
       <section class="sec" id="kartyak"><div class="sec-head"><h2 class="h-sec reveal">Amit érteni kell</h2></div>
         <div class="grid grid-2">${l.kartyak.map((k) => `<article class="concept reveal">${k.k ? `<div class="k">${esc(k.k)}</div>` : ''}<h3 class="h-card">${k.cim}</h3>${k.html}${k.hasonlat ? `<div class="analogy">${k.hasonlat}</div>` : ''}</article>`).join('')}</div></section>
       ${l.szamok && l.szamok.length ? `<section class="sec" id="szamok"><div class="sec-head"><h2 class="h-sec reveal">🔢 Számok, amiket kérdeznek</h2><p class="lead reveal">A tesztek kedvenc csapdái. Ezeket érdemes bemagolni.</p></div>
         <div class="numbers">${l.szamok.map((n) => `<div class="num reveal"><div class="v" data-count="${esc(n.v)}">${esc(n.v)}</div><div class="l">${n.l}</div></div>`).join('')}</div></section>` : ''}
       <section class="sec" id="csapdak"><div class="sec-head"><h2 class="h-sec reveal">⚠️ Csapdák</h2><p class="lead reveal">Itt szoktak elcsúszni a válaszok.</p></div>
         <div class="grid">${l.csapdak.map((c) => `<div class="trap reveal"><i>!</i><div>${c}</div></div>`).join('')}</div></section>
+      <section class="sec" id="kerdesek"><div class="sec-head"><h2 class="h-sec reveal">📋 Mit kérdeznek?</h2><p class="lead reveal">A téma mind a ${qs.length} kérdése, a jó válasszal. Olvasd át egyszer, mint egy puskát. A „Miért?” lenyitja a magyarázatot.</p></div>
+        <div class="qa-list">${qs.map(qaItem).join('')}</div></section>
       <section class="sec" id="minikviz"><div class="sec-head"><h2 class="h-sec reveal">Mini-kvíz</h2><p class="lead reveal">3 kérdés a leckéből. Ha megy, jöhet a teljes téma (${qs.length} kérdés).</p></div>
         <div id="inlineQuiz"></div></section>
       <div class="lesson-nav">
@@ -150,9 +157,60 @@
       const el = document.getElementById(b.dataset.go);
       window.scrollTo({ top: el.getBoundingClientRect().top + scrollY - 120, behavior: 'smooth' });
     }));
+    const stops = $$('.anim', v).map((el, i) => animPlayer(el, anims[i]));
+    cleanup = () => stops.forEach((f) => f());
     const mini = (l.mini || []).map((i) => BY_ID[i]).filter(Boolean);
     const pool = mini.length >= 3 ? mini.slice(0, 3) : mini.concat(shuffle(qs.filter((q) => !mini.includes(q))).slice(0, 3 - mini.length));
     runQuiz($('#inlineQuiz', v), pool, { inline: true, title: 'Mini-kvíz' });
+  }
+
+  /* ---------- Animált ábra („videó”): a lépések egyenként épülnek fel, alattuk narráció ----------
+     tipus: piramis (fentről lefelé szélesedő szintek) | lanc (számozott folyamat) | nyil (ki → kit, a nyílon a feltétel) */
+  function animBlock(a) {
+    const n = a.lepesek.length;
+    const step = (st, i) => {
+      if (a.tipus === 'piramis') return `<div class="st" style="--w:${Math.round(38 + (62 * i) / Math.max(1, n - 1))}%"><b>${st.t}</b>${st.s ? `<span>${st.s}</span>` : ''}</div>`;
+      if (a.tipus === 'nyil') return `<div class="st"><span class="from">${st.from}</span><span class="arr"><em>${st.via || ''}</em></span><span class="to"><b>${st.t}</b>${st.s ? `<span>${st.s}</span>` : ''}</span></div>`;
+      return `<div class="st"><div class="dot">${i + 1}</div><div><b>${st.t}</b>${st.s ? `<span>${st.s}</span>` : ''}</div></div>`;
+    };
+    return `<div class="anim reveal"><div class="anim-head"><h3 class="h-card">${a.cim}</h3>
+      <div class="anim-ctl"><button class="ab play" aria-label="Lejátszás">▶</button><button class="ab redo" aria-label="Újra">↻</button></div></div>
+      <div class="anim-cap"><span class="n"></span><p></p></div><div class="anim-bar"><i></i></div>
+      <div class="anim-stage t-${a.tipus || 'lanc'}">${a.lepesek.map(step).join('')}</div></div>`;
+  }
+  function animPlayer(el, a) {
+    const sts = $$('.st', el), n = sts.length, cap = $('.anim-cap p', el), num = $('.anim-cap .n', el), bar = $('.anim-bar i', el), btn = $('.play', el);
+    let i = -1, timer = null;
+    const show = (k) => {
+      i = k;
+      sts.forEach((s, j) => { s.classList.toggle('in', j <= k); s.classList.toggle('cur', j === k); });
+      cap.classList.remove('fade'); void cap.offsetWidth; cap.classList.add('fade');
+      cap.innerHTML = k < 0 ? (a.intro || 'Nyomd meg a ▶ gombot.') : a.lepesek[k].c;
+      num.textContent = k < 0 ? '' : `${k + 1}/${n}`;
+      bar.style.width = ((k + 1) / n) * 100 + '%';
+    };
+    const stop = () => { clearTimeout(timer); timer = null; btn.textContent = '▶'; };
+    /* olvasási idő a narráció hosszából (kb. 15 karakter / mp), 2,6 és 7 mp között */
+    const wait = (k) => Math.min(7000, Math.max(2600, (a.lepesek[k].c || '').replace(/<[^>]+>/g, '').length * 65));
+    const tick = () => { if (i >= n - 1) return stop(); show(i + 1); timer = setTimeout(tick, wait(i)); };
+    const play = () => { if (i >= n - 1) show(-1); btn.textContent = '❚❚'; timer = setTimeout(tick, 350); };
+    btn.addEventListener('click', () => (timer ? stop() : play()));
+    $('.redo', el).addEventListener('click', () => { stop(); show(-1); play(); });
+    sts.forEach((s, j) => s.addEventListener('click', () => { stop(); show(j); }));
+    show(-1);
+    const io = new IntersectionObserver((es) => { if (es[0].isIntersecting) { io.disconnect(); if (i < 0 && !timer) play(); } }, { threshold: 0.55 });
+    io.observe(el);
+    return () => { stop(); io.disconnect(); };
+  }
+
+  /* „Mit kérdeznek?” sor: kérdés, a jó válasz(ok) kiemelve, a rosszak halványan, lenyitható magyarázat */
+  function qaItem(q) {
+    const good = q.a.map((k) => `<li>${esc(q.o[k])}</li>`).join('');
+    const bad = q.o.filter((_, k) => !q.a.includes(k)).map(esc).join(' · ');
+    const why = (q.x ? `<p>${esc(q.x)}</p>` : '') + (q.old ? `<p class="old">${oldNote(q.old)}</p>` : '');
+    return `<div class="qa"><div class="qa-q">${esc(q.q)}${q.a.length > 1 ? ' <span class="pill">több jó</span>' : ''}</div>
+      <ul class="qa-a">${good}</ul>${bad ? `<div class="qa-no">Nem: ${bad}</div>` : ''}
+      ${why ? `<details><summary>Miért?</summary>${why}</details>` : ''}</div>`;
   }
 
   /* ---------- Gyakorlás menü ---------- */
