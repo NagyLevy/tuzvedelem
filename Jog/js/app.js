@@ -96,10 +96,10 @@
     if (cleanup) { cleanup(); cleanup = null; }
     const { parts, params } = parse();
     const page = parts[0] || 'home';
-    $$('[data-nav]').forEach((a) => a.classList.toggle('on', a.dataset.nav === page || (['lecke', 'sztori'].includes(page) && a.dataset.nav === 'leckek') || (['kviz', 'kartya', 'zh', 'parbaj', 'villam', 'grind'].includes(page) && a.dataset.nav === 'gyakorlas') || (page === 'osszefoglalo' && a.dataset.nav === 'szamok')));
+    $$('[data-nav]').forEach((a) => a.classList.toggle('on', a.dataset.nav === page || (['lecke', 'sztori'].includes(page) && a.dataset.nav === 'leckek') || (['kviz', 'kartya', 'zh', 'parbaj', 'villam', 'grind', 'sync'].includes(page) && a.dataset.nav === 'gyakorlas') || (page === 'osszefoglalo' && a.dataset.nav === 'szamok')));
     setTone(null);
     const views = { home: viewHome, leckek: viewLessons, lecke: () => viewLesson(parts[1]), gyakorlas: viewPractice, kviz: () => viewQuiz(params), zh: () => viewQuiz({ mode: 'zh' }), kartya: () => viewFlash(params), szamok: viewNumbers, sztori: () => viewStory(parts[1]),
-      most: viewCoach, grind: () => viewGrind(params), parbaj: () => (parts[1] ? viewDuel(parts[1]) : viewDuelList()), villam: () => viewSwipe(params), osszefoglalo: viewSummary };
+      most: viewCoach, grind: () => viewGrind(params), sync: () => viewSync(params), parbaj: () => (parts[1] ? viewDuel(parts[1]) : viewDuelList()), villam: () => viewSwipe(params), osszefoglalo: viewSummary };
     (views[page] || viewHome)();
     window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
     app.querySelectorAll('.view').forEach((v) => { FX.words(v); FX.reveal(v); FX.rings(v); });
@@ -498,7 +498,7 @@
         <div class="nc-body"><div class="nc-k">Most ezt · kb. ${p.perc} perc</div><div class="nc-t">${esc(p.title)}</div><div class="nc-why">${esc(p.why)}</div></div>
         <div class="nc-go" aria-hidden="true">▶</div></a>
       <div class="coach-alt reveal"><span>Inkább mást?</span>
-        <a class="chip" href="#/grind">🔥 Grind</a><a class="chip" href="#/villam">⚡ Igaz/hamis</a><a class="chip" href="#/parbaj">⚔️ Párbaj</a><a class="chip" href="#/kviz?mode=most">🔁 Ismétlés (${due})</a><a class="chip" href="#/osszefoglalo">📄 Összefoglaló</a><a class="chip" href="#/zh">⏱️ ZH-szimuláció</a></div>
+        <a class="chip" href="#/grind">🔥 Grind</a><a class="chip" href="#/sync">📲 Szinkron</a><a class="chip" href="#/villam">⚡ Igaz/hamis</a><a class="chip" href="#/parbaj">⚔️ Párbaj</a><a class="chip" href="#/kviz?mode=most">🔁 Ismétlés (${due})</a><a class="chip" href="#/osszefoglalo">📄 Összefoglaló</a><a class="chip" href="#/zh">⏱️ ZH-szimuláció</a></div>
       <div class="grid grid-2 coach-stats">
         <div class="card reveal"><h3 class="h-card">Mai adag</h3>${FX.ring(Math.min(100, Math.round((todayN / goal) * 100)), `<span class="pct">${todayN}</span>`)}<p class="muted">válasz ma · cél: ${goal}</p></div>
         <div class="card reveal"><h3 class="h-card">Ismétlésre vár</h3><div class="big-n">${due}</div><p class="muted">A rossz válaszokat 2 perc múlva, a jókat egyre ritkábban hozza vissza.</p></div>
@@ -537,6 +537,14 @@
   /* becsült ZH-pont: amit tudsz, az pont; a többi 1/3 eséllyel tipp */
   const gEst = () => { const { m, h, n } = gStats(GPOOL), k = n ? (m + h / 2) / n : 0; return 15 * (k + (1 - k) / 3); };
   const gGrade = (e) => 1 + ZH_CUTS.filter((c) => e >= c).length;
+  /* átmenési esély: 15 kérdés, mindegyik p eséllyel jó (tudod, vagy 1/3 eséllyel eltalálod) → P(legalább 8) */
+  const gPass = () => {
+    const { m, h, n } = gStats(GPOOL), k = n ? (m + h / 2) / n : 0, p = k + (1 - k) / 3;
+    let sum = 0, c = 1;
+    for (let i = 0; i <= 15; i++) { if (i >= 8) sum += c * p ** i * (1 - p) ** (15 - i); c = (c * (15 - i)) / (i + 1); }
+    return Math.round(sum * 100);
+  };
+  const answered = () => { let ok = 0, all = 0; Object.values(S.seen).forEach((x) => { ok += x.ok; all += x.ok + x.bad; }); return { ok, all }; };
   /* sorrend: témák az éles ZH súlya szerint összefésülve, témán belül előbb a valódi ZH, aztán a rövid (alap) kérdések */
   function gOrder(pool) {
     const by = {}, out = [];
@@ -562,8 +570,9 @@
           <p class="lead reveal">3 válasz, 1 jó — mint holnap. Amit rontasz, 3 kérdés múlva visszajön. Ami kétszer egymás után megy, az kiesik. Csak kattints: a jó válasz után magától lapoz.</p>
           <div class="g-stats reveal">${FX.ring(pct, `<span class="pct">${pct}%</span>`, true)}
             <div><div class="g-est">${fmt1(e)} <small>/ 15 pont</small></div><span class="g-grade" style="--gc:${GC[g]}">${g} · ${GRADE_W[g]}</span>
-            <div class="g-sub">Becsült ZH-pont a mostani tudásoddal (amit nem tudsz, azt 1/3 eséllyel tippelnéd).<br>Megy: <b>${st.m}</b> / ${st.n}${st.h ? ` · félig: ${st.h}` : ''}</div></div></div>
-          <div class="btn-row reveal"><a class="btn big-go" href="#/grind?go=1${t0 ? '&t=' + t0.id : ''}">🔥 ${st.m || st.h ? 'Folytatás' : 'Indulás'}</a>${t0 ? '<a class="btn alt" href="#/grind">Minden téma</a>' : ''}</div></section>
+            <div class="g-pass">Átmenési esély (legalább 8 pont): <b>${gPass()}%</b></div>
+            <div class="g-sub">Becsült ZH-pont a mostani tudásoddal (amit nem tudsz, azt 1/3 eséllyel tippelnéd).<br>Megy: <b>${st.m}</b> / ${st.n}${st.h ? ` · félig: ${st.h}` : ''}${answered().all ? ` · eddig ${answered().all} válasz, ${Math.round((answered().ok / answered().all) * 100)}% jó` : ''}</div></div></div>
+          <div class="btn-row reveal"><a class="btn big-go" href="#/grind?go=1${t0 ? '&t=' + t0.id : ''}">🔥 ${st.m || st.h ? 'Folytatás' : 'Indulás'}</a>${t0 ? '<a class="btn alt" href="#/grind">Minden téma</a>' : ''}<a class="btn alt" href="#/sync">📲 Szinkron a telefonnal</a></div></section>
         <section class="sec"><div class="sec-head"><h2 class="h-sec reveal">Csak egy téma?</h2></div>
           <div class="tbars">${topics.map(({ t, m, n }) => `<a class="tbar reveal" href="#/grind?go=1&t=${t.id}" style="--tc:${t.c}"><span class="tb-n">${t.g} ${esc(t.short)}</span><span class="tb-track"><i style="--w:${Math.round((m / n) * 100)}%"></i></span><span class="tb-p">${m}/${n}</span></a>`).join('')}</div></section></div>`);
       return;
@@ -657,6 +666,7 @@
       root.innerHTML = `${bar()}<div class="qcard g-round"><p class="eyebrow">${rN / 20}. kör kész · ${rOk} / 20 jó</p>
         ${FX.ring(Math.round((rOk / 20) * 100), `<span class="pct">${rOk}/20</span>`)}
         <div class="g-est">${fmt1(e)} <small>/ 15 pont</small></div><span class="g-grade" style="--gc:${GC[g]}">${g} · ${GRADE_W[g]}</span>
+        <div class="g-pass">Átmenési esély: <b>${gPass()}%</b></div>
         <p class="g-sub">Ebben a körben <b>+${rNew}</b> kérdés lett „megy”. Összesen ${st.m} / ${st.n}.</p>
         <p class="muted">Igyál egy kortyot, nyújtózz egyet. Aztán jöhet a következő 20.</p>
         <div class="btn-row"><button class="btn big-go" id="gNext">Következő kör ▶</button><a class="btn alt" href="${home}">Szünet</a></div></div>`;
@@ -685,6 +695,86 @@
     document.addEventListener('keydown', onKey);
     cleanup = () => { document.removeEventListener('keydown', onKey); clearTimeout(adv); };
     next();
+  }
+
+  /* ---------- Szinkron gép ⇄ telefon: a grind-haladás egy linkben (QR-kóddal) utazik, szerver nélkül ----------
+     kód: '1.<GPOOL hossza>.<xp>.<base64url>' — kérdésenként 2 bit (0 = nem volt, 1 = rontott, 2 = egyszer jó, 3 = megy) */
+  const SYNC_V = '1';
+  function syncCode() {
+    const bytes = new Uint8Array(Math.ceil(GPOOL.length / 4));
+    GPOOL.forEach((q, i) => { const l = S.g[q.id]; bytes[i >> 2] |= (l === undefined ? 0 : l + 1) << ((i & 3) * 2); });
+    let bin = '';
+    bytes.forEach((b) => (bin += String.fromCharCode(b)));
+    return [SYNC_V, GPOOL.length, S.xp | 0, btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')].join('.');
+  }
+  function syncRead(code) {
+    try {
+      const [v, n, xp, b] = String(code || '').split('.');
+      if (v !== SYNC_V || +n !== GPOOL.length || !b) return null;
+      const bin = atob(b.replace(/-/g, '+').replace(/_/g, '/'));
+      return { lv: GPOOL.map((_, i) => ((bin.charCodeAt(i >> 2) || 0) >> ((i & 3) * 2)) & 3), xp: +xp || 0 };
+    } catch (e) { return null; }
+  }
+  /* egyesítés: kérdésenként a jobbik eredmény marad */
+  function syncMerge(d) {
+    let up = 0;
+    GPOOL.forEach((q, i) => {
+      const v = d.lv[i];
+      if (!v) return;
+      const l = v - 1, cur = S.g[q.id];
+      if (cur === undefined || l > cur) { S.g[q.id] = l; up++; }
+    });
+    S.xp = Math.max(S.xp, d.xp);
+    save();
+    return up;
+  }
+  function viewSync(p) {
+    setTone('#0a84ff');
+    const url = location.href.split('#')[0] + '#/sync?d=' + syncCode(), st = gStats(GPOOL), inc = p.d ? syncRead(p.d) : null;
+    const incHTML = !p.d ? '' : !inc
+      ? `<div class="card sync-in bad"><h3 class="h-card">⚠️ Ezt a kódot nem tudom beolvasni</h3><p class="muted">Valószínűleg a két eszközön más verzió fut. Frissítsd az oldalt mindkét helyen, aztán küldd át újra.</p></div>`
+      : `<div class="card sync-in"><h3 class="h-card">📥 Haladás érkezett a másik eszközről</h3><p>Benne: <b>${inc.lv.filter((x) => x === 3).length}</b> kérdés „megy” · ${inc.xp} XP</p><p class="muted">Egyesítéskor kérdésenként a jobbik eredmény marad meg, semmi nem vész el.</p><div class="btn-row"><button class="btn big-go" id="syncGo">✓ Egyesítés ezen az eszközön</button></div></div>`;
+    const v = mount(`<div class="wrap sync">
+      <section class="hero"><p class="eyebrow">Szinkron · gép ⇄ telefon</p><h1 class="h-hero word-rise">Vidd át a <span class="grad-text">haladásod.</span></h1>
+        <p class="lead reveal">Nincs fiók, nincs szerver: a haladásod egy linkben utazik. Olvasd be a QR-kódot a telefonod kamerájával, és koppints az Egyesítésre.</p></section>
+      ${incHTML}
+      <div class="grid grid-2">
+        <div class="card sync-qr reveal"><h3 class="h-card">📲 Küldés erről az eszközről</h3><div class="qr-box" id="qrBox"><span class="muted">QR-kód betöltése…</span></div>
+          <p class="muted">Megy: <b>${st.m}</b> / ${st.n} · ${S.xp} XP</p>
+          <div class="btn-row"><button class="btn alt sm" id="syncCopy">🔗 Link másolása</button>${navigator.share ? '<button class="btn alt sm" id="syncShare">📤 Megosztás</button>' : ''}</div></div>
+        <div class="card reveal"><h3 class="h-card">Így csináld</h3><ol class="sync-steps">
+          <li>A <b>gépen</b> nyisd meg ezt az oldalt (Grind → 📲 Szinkron).</li>
+          <li>A <b>telefon kamerájával</b> olvasd be a QR-kódot. Abban a böngészőben nyisd meg, amiben tanulni szoktál (ha a kamera másikat nyit, másold át a linket).</li>
+          <li>A telefonon koppints: <b>✓ Egyesítés</b>.</li>
+          <li>Visszafelé ugyanígy: a telefonon <b>📤 Megosztás</b> → küldd el magadnak (pl. Messengeren), és a gépen nyisd meg.</li></ol>
+          <p class="muted">Kérdésenként mindig a jobbik eredmény marad meg. Ha mindkét eszközön tanulsz, a végén szinkronizálj egyszer oda-vissza.</p></div>
+      </div>
+      <div class="btn-row"><a class="btn tc" href="#/grind">🔥 Vissza a Grindhez</a></div></div>`);
+    const box = $('#qrBox', v);
+    const draw = () => {
+      try {
+        const qr = qrcode(0, 'L');
+        qr.addData(url);
+        qr.make();
+        const n = qr.getModuleCount();
+        let d = '';
+        for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (qr.isDark(r, c)) d += `M${c},${r}h1v1h-1z`;
+        box.innerHTML = `<svg viewBox="-2 -2 ${n + 4} ${n + 4}" shape-rendering="crispEdges" role="img" aria-label="QR-kód a szinkron linkhez"><rect x="-2" y="-2" width="${n + 4}" height="${n + 4}" fill="#fff"/><path d="${d}" fill="#000"/></svg>`;
+      } catch (e) { box.innerHTML = '<span class="muted">A QR-kód nem töltött be. Használd a Link másolása gombot.</span>'; }
+    };
+    if (window.qrcode) draw();
+    else {
+      const sc = document.createElement('script');
+      sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js';
+      sc.onload = draw;
+      sc.onerror = () => (box.innerHTML = '<span class="muted">Nincs net a QR-kódhoz. Használd a Link másolása gombot.</span>');
+      document.head.appendChild(sc);
+    }
+    $('#syncCopy', v).addEventListener('click', async () => { try { await navigator.clipboard.writeText(url); FX.toast('🔗 Link másolva'); } catch (e) { window.prompt('Másold ki ezt a linket:', url); } });
+    const sh = $('#syncShare', v);
+    if (sh) sh.addEventListener('click', () => navigator.share({ title: 'Jog – a haladásom', url }).catch(() => {}));
+    const go = $('#syncGo', v);
+    if (go) go.addEventListener('click', () => { const up = syncMerge(inc); FX.confetti(140); FX.toast(`✓ Egyesítve: ${up} kérdés frissült`); location.hash = '#/grind'; });
   }
 
   /* ---------- Párbaj: összekeverhető fogalompárok ---------- */

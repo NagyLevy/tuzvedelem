@@ -717,3 +717,15 @@ html.story-open .tabbar, html.story-open .nav { visibility: hidden; }
 .g-round .btn-row { justify-content: center; margin-top: 10px; }
 .g-round .s-emoji { font-size: 56px; }
 @media (max-width: 560px) { .g-stats { grid-template-columns: 1fr; justify-items: center; text-align: center; } }
+
+/* ---------- Szinkron + átmenési esély ---------- */
+.g-pass { margin-top: 10px; font-size: 15px; color: var(--ink-2); }
+.g-pass b { font-size: 18px; color: var(--good); }
+.qr-box { display: grid; place-items: center; width: min(100%, 250px); aspect-ratio: 1; margin: 8px auto 12px; padding: 8px; border-radius: var(--r-lg); background: #fff; box-shadow: var(--shadow-1); }
+.qr-box svg { width: 100%; height: 100%; display: block; }
+.qr-box .muted { color: #666; font-size: 13px; text-align: center; }
+.sync-qr { text-align: center; }
+.sync-qr .btn-row { justify-content: center; }
+.sync-steps { margin: 0 0 12px; padding-left: 20px; display: grid; gap: 8px; font-size: 15px; line-height: 1.45; }
+.sync-in { margin: 0 0 18px; border-color: var(--good); background: color-mix(in srgb, var(--good) 8%, var(--surface)); }
+.sync-in.bad { border-color: var(--warn); background: var(--warn-bg); }
