@@ -729,3 +729,6 @@ html.story-open .tabbar, html.story-open .nav { visibility: hidden; }
 .sync-steps { margin: 0 0 12px; padding-left: 20px; display: grid; gap: 8px; font-size: 15px; line-height: 1.45; }
 .sync-in { margin: 0 0 18px; border-color: var(--good); background: color-mix(in srgb, var(--good) 8%, var(--surface)); }
 .sync-in.bad { border-color: var(--warn); background: var(--warn-bg); }
+
+/* ---------- Telefonon álló háttér: a folyamatosan mozgó, elmosott aurora a GPU-t (és az aksit) dolgoztatja ---------- */
+@media (hover: none) { .aurora i { animation: none; will-change: auto; } }
