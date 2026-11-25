@@ -19,11 +19,16 @@
     ...(window.JOG_TESZT || []).map((q) => ({ ...q, id: 'j' + q.n, src: 'teszt' })),
     /* a kurzus-kérdések magyarázata külön fájlban van (kurzus.js generált): JOG_KURZUS_X[id] = 'szöveg' vagy {x, old} */
     ...(window.JOG_KURZUS || []).map((q) => { const e = (window.JOG_KURZUS_X || {})[q.id]; return e ? { ...q, ...(typeof e === 'string' ? { x: e } : e) } : q; }),
+    /* egy korábbi éles ZH 15 kérdése (3 válasz, 1 jó) */
+    ...(window.JOG_ZHMINTA || []).map((q) => ({ ...q, id: 'z' + q.n, src: 'zh' })),
   ];
   const BY_ID = Object.fromEntries(BANK.map((q) => [q.id, q]));
   /* „régen” megjegyzés: ha a szöveg maga nem a régi szabályra utal, elé tesszük, hogy „Régen:” */
   const oldNote = (t) => (/^(régen|a régi|régi|\d{4})/i.test(t) ? '' : '<b>Régen:</b> ') + esc(t);
-  const srcLabel = (q) => (q.src === 'teszt' ? `jogteszt.pdf · ${q.n}.` : 'Kurzus-önellenőrző');
+  const srcLabel = (q) => (q.src === 'teszt' ? `jogteszt.pdf · ${q.n}.` : q.src === 'zh' ? `⭐ Valódi ZH · ${q.n}.` : 'Kurzus-önellenőrző');
+  /* éles ZH ponthatára (15 kérdésből): 8 = elégséges, 10 = közepes, 12 = jó, 14 = jeles */
+  const ZH_CUTS = [8, 10, 12, 14];
+  const zhDays = () => Math.round((new Date(2026, 10, 26) - new Date(new Date().toDateString())) / 864e5);
 
   /* ---------- Haladás ---------- */
   const KEY = 'jog.v1';
@@ -456,8 +461,15 @@
   const PARBAJ = window.JOG_PARBAJ || [];
   const storyDone = (id) => !!S.story[id] || mastery(topicQs(id)) >= 70;
   function coachPick() {
+    if (BY_ID.z1 && !S.seen.z1) return { href: '#/kviz?mode=minta', ic: '⭐', c: '#ff375f', title: 'Valódi ZH-minta: 15 kérdés', why: 'Pont így néz ki a ZH: 15 kérdés, 3 válasz, 8 jó = kettes. Kezdd ezzel, minden válasz után magyarázattal.', perc: 5 };
     const due = dueIds(), urgent = due.filter((id) => S.srs[id].b <= 1).length;
     if (urgent >= 4 || due.length >= 12) return { href: '#/kviz?mode=most', ic: '🔁', c: '#ff375f', title: `Ismétlés: ${Math.min(Math.max(due.length, 10), 12)} kérdés`, why: 'Ezeket most kezded elfelejteni — ilyenkor a legolcsóbb visszahozni őket.', perc: 3 };
+    const dz = zhDays();
+    if (dz >= 0 && dz <= 1) {
+      return S.coachN % 2 === 0
+        ? { href: '#/zh', ic: '⏱️', c: '#ff9f0a', title: 'ZH-szimuláció: 15 kérdés, mint élesben', why: 'A ZH előtt ez hozza a legtöbbet: minden témából jön kérdés, és a hibáid pár perc múlva visszajönnek ismétlésre.', perc: 10 }
+        : { href: '#/villam', ic: '⚡', c: '#30d158', title: 'Igaz vagy hamis: 20 villámkártya', why: 'Kis lazítás a szimulációk között — közben ez is gyakorlás, minden témából.', perc: 3 };
+    }
     const fresh = TEMAK.find((t) => L[t.id] && !storyDone(t.id));
     if (fresh) return { href: '#/sztori/' + fresh.id, ic: fresh.g, c: fresh.c, title: `${fresh.no}. lecke fókusz módban: ${fresh.short}`, why: Object.keys(S.story).length ? 'A következő lecke, amit még nem vettél át. Kártyánként, animálva, közben kérdésekkel.' : 'Kezdjük az elején: egy lecke kártyánként, animálva, közben kérdésekkel.', perc: L[fresh.id].perc };
     const weak = TEMAK.filter((t) => L[t.id]).map((t) => ({ t, m: mastery(topicQs(t.id)) })).sort((a, b) => a.m - b.m)[0];
@@ -473,7 +485,7 @@
   }
   function viewCoach() {
     const p = coachPick(), due = dueIds().length, todayN = S.days[today()] || 0, goal = 100;
-    const days = Math.round((new Date(2026, 10, 26) - new Date(new Date().toDateString())) / 864e5);
+    const days = zhDays();
     const zh = days > 1 ? `${days} nap múlva ZH` : days === 1 ? 'Holnap ZH' : days === 0 ? 'Ma ZH — hajrá!' : 'A ZH után';
     const topics = TEMAK.filter((t) => L[t.id]).map((t) => ({ t, m: mastery(topicQs(t.id)) })).sort((a, b) => a.m - b.m);
     const v = mount(`<div class="wrap coach">
@@ -690,7 +702,8 @@
       ${tile('#/villam', '⚡', '#30d158', 'Igaz vagy hamis?', 'Villámgyors lapozás: jó válasz ez a kérdésre? Jobbra igen, balra nem.', '20 kártya / kör')}
       ${tile('#/kviz?mode=mix', '🎲', '#5e5ce6', 'Vegyes kvíz', '20 véletlen kérdés az összes témából, azonnali magyarázattal.', `${BANK.length} kérdésből`)}
       ${tile('#/kviz?mode=hibak', '🎯', '#ff375f', 'Hibáim', 'Csak azok, amiket elrontottál. Ha jól válaszolsz, kikerül a listáról.', `${S.wrong.length} vár rád`)}
-      ${tile('#/zh', '⏱️', '#ff9f0a', 'ZH-szimuláció', '30 kérdés, 30 perc, magyarázat csak a végén — mint élesben. Becsült jeggyel.', 'Vizsga-mód')}
+      ${tile('#/kviz?mode=minta', '⭐', '#ff375f', 'Valódi ZH-minta', 'Egy korábbi éles ZH mind a 15 kérdése, azonnali magyarázattal. Így néz ki a vizsga.', '15 kérdés · 3 válasz')}
+      ${tile('#/zh', '⏱️', '#ff9f0a', 'ZH-szimuláció', '15 kérdés minden témából, 3 válasz, 20 perc, magyarázat csak a végén — mint élesben. Éles ponthatárral.', 'Vizsga-mód')}
       ${tile('#/kviz?mode=teszt', '📄', '#0a84ff', 'jogteszt.pdf végig', `Mind a ${nT} kérdés sorban. Ott folytatod, ahol abbahagytad.`, `${BANK.filter((q) => q.src === 'teszt' && S.seen[q.id]).length} / ${nT} kész`)}
       ${tile('#/kartya', '🃏', '#30d158', 'Villámkártyák', 'Fogalmak és számok, megfordítható kártyákon. A „nem tudtam” visszajön.', 'Szóköz = fordítás')}
       ${tile('#/szamok', '🔢', '#bf5af2', 'Számok összesítő', 'Minden határidő, létszám, életkor egy helyen.', 'Évek, napok, fők')}
@@ -725,9 +738,16 @@
       add(shuffle(S.wrong.map((id) => BY_ID[id])));
       add(shuffle(BANK.filter((q) => !S.seen[q.id])));
       opts.title = 'Ismétlés';
+    } else if (p.mode === 'minta') {
+      pool = BANK.filter((q) => q.src === 'zh');
+      opts = { title: 'Valódi ZH-minta', cuts: ZH_CUTS };
     } else if (p.mode === 'zh') {
-      pool = shuffle(BANK.filter((q) => q.t !== 'fogyaszto')).slice(0, 30);
-      opts = { title: 'ZH-szimuláció', exam: true, minutes: 30 };
+      /* mint élesben: 15 kérdés minden témából, 3 válasz (a jó + 2 véletlen rossz), 1 jó */
+      const QUOTA = { alap: 2, alkotmany: 2, allamszerv: 2, birosag: 1, munka: 1, polgari1: 1, polgari2: 2, bunteto: 2, nemzetkozi: 1, kozig: 1 };
+      const fits = (q) => q.a.length === 1 && q.o.length >= 3 && !q.o.some((o) => SELFREF.test(o));
+      pool = shuffle(Object.entries(QUOTA).flatMap(([t, k]) => shuffle(topicQs(t).filter(fits)).slice(0, k)))
+        .map((q) => ({ ...q, o: [q.o[q.a[0]], ...shuffle(q.o.filter((_, k) => k !== q.a[0])).slice(0, 2)], a: [0] }));
+      opts = { title: 'ZH-szimuláció', exam: true, minutes: 20, cuts: ZH_CUTS };
     } else if (p.mode === 'teszt') {
       const all = BANK.filter((q) => q.src === 'teszt');
       const firstOpen = all.findIndex((q) => !S.seen[q.id]);
@@ -858,7 +878,7 @@
       clearInterval(timer);
       state = null;
       const pct = pool.length ? Math.round((score / pool.length) * 100) : 0;
-      const grade = pct >= 87 ? 5 : pct >= 75 ? 4 : pct >= 63 ? 3 : pct >= 50 ? 2 : 1;
+      const grade = o.cuts ? 1 + o.cuts.filter((c) => score >= c).length : pct >= 87 ? 5 : pct >= 75 ? 4 : pct >= 63 ? 3 : pct >= 50 ? 2 : 1;
       const words = ['', 'Elégtelen', 'Elégséges', 'Közepes', 'Jó', 'Jeles'];
       if (pct >= 80) FX.confetti(180);
       if (inline) {
@@ -867,12 +887,12 @@
           <div class="btn-row"><a class="btn tc" href="#/kviz?t=${pool[0] ? pool[0].t : ''}">Teljes téma</a></div></div>`;
         return;
       }
-      setTone(pct >= 75 ? '#30d158' : pct >= 50 ? '#ff9f0a' : '#ff453a');
+      setTone(o.cuts ? (grade >= 4 ? '#30d158' : grade >= 2 ? '#ff9f0a' : '#ff453a') : pct >= 75 ? '#30d158' : pct >= 50 ? '#ff9f0a' : '#ff453a');
       root.innerHTML = `<div class="result">
         <p class="eyebrow">${esc(o.title || 'Kvíz')} · kész</p>
         ${FX.ring(pct, `<span class="pct">${pct}%</span>`, true)}
-        <div class="grade">${o.exam ? grade + ' · ' + words[grade] : score + ' / ' + pool.length}</div>
-        <p class="lead">${o.exam ? `${score} / ${pool.length} jó válasz. A jegy csak becslés (50% elégséges, 63% közepes, 75% jó, 87% jeles).` : pct >= 80 ? 'Ez nagyon megy. 🔥' : pct >= 50 ? 'Jó úton vagy — a hibákat nézd át alább.' : 'Nézd át a leckét, aztán jöhet a Hibáim mód.'}</p>
+        <div class="grade">${o.exam || o.cuts ? grade + ' · ' + words[grade] : score + ' / ' + pool.length}</div>
+        <p class="lead">${o.cuts ? `${score} / ${pool.length} pont. Éles ponthatár: 8 elégséges, 10 közepes, 12 jó, 14 jeles.` : o.exam ? `${score} / ${pool.length} jó válasz. A jegy csak becslés (50% elégséges, 63% közepes, 75% jó, 87% jeles).` : pct >= 80 ? 'Ez nagyon megy. 🔥' : pct >= 50 ? 'Jó úton vagy — a hibákat nézd át alább.' : 'Nézd át a leckét, aztán jöhet a Hibáim mód.'}</p>
         <div class="btn-row"><a class="btn" href="#/most">▶ Mit csináljak most?</a><a class="btn alt" href="#/kviz?mode=hibak">Hibáim (${S.wrong.length})</a><a class="btn alt" href="#/gyakorlas">Másik mód</a></div>
         ${wrongs.length ? `<div class="wrong-list"><h3 class="h-card">Ezeket rontottad el</h3>${wrongs.map((q) => `<div class="card"><div class="q">${esc(q.q)}</div><div class="a">✓ ${q.a.map((k) => esc(q.o[k])).join(' · ')}</div>${q.x ? `<div class="muted" style="font-size:14px;margin-top:4px">${esc(q.x)}</div>` : ''}${q.old ? `<div class="muted" style="font-size:13px;margin-top:4px">⚠️ ${oldNote(q.old)}</div>` : ''}</div>`).join('')}</div>` : ''}
       </div>`;

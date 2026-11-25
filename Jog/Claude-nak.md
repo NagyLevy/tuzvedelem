@@ -32,6 +32,7 @@ Jog/
   data/jogteszt-1..3.js  JOG_TESZT — a jogteszt.pdf mind a 215 kérdése (n: 1–215)
   data/kurzus.js      JOG_KURZUS — 159 kérdés a COEDU kurzus önellenőrzőiből (GENERÁLT, ne kézzel szerkeszd)
   data/kurzus-x.js    JOG_KURZUS_X — kézzel írt magyarázat mind a 159 kurzus-kérdéshez ({id: 'szöveg'} vagy {x, old})
+  data/zhminta.js     JOG_ZHMINTA — egy korábbi éles ZH 15 kérdése (fotóról). Éles formátum: 15 kérdés, 3 válasz, 1 jó; 8 pont = 2-es
   data/parbajok.js    JOG_PARBAJ — 33 összekeverhető fogalompár: {id, t, a:[név, lényeg], b:[név, lényeg], s:[[állítás, 'a'|'b', miért?]]}
   podcast/            NotebookLM-források leckénként + összefoglaló (Suits-stílus), 00-UTMUTATO.md
   data/animaciok.js   JOG_ANIM — animált „videó” ábrák leckénként (piramis / lanc / nyil típus, lépésenkénti narrációval)
@@ -81,7 +82,8 @@ window.JOG_LECKEK = (window.JOG_LECKEK || []).concat([{
 | `#/sztori/:id` | **Fókusz mód (ADHD-barát)**: a lecke teljes képernyős, Instagram-sztori-szerű diákra bontva (intro → animációk → kártyák, a pontok koppintásra egyenként → minden 2. kártya után gyors kérdés → számok felpörögve → csapdák rázkódva → 2 záró kérdés → konfetti). Szóköz/→ tovább, ← vissza, Esc bezár, 1–5 válasz. A `.story` overlay a `document.body`-ba kerül (a `.view` transform-animációja miatt), a cleanup eltávolítja. |
 | `#/gyakorlas` | módválasztó (forrás: mind / jogteszt / kurzus) |
 | `#/kviz?mode=mix\|hibak\|teszt&t=<téma>&src=` | kvíz azonnali visszajelzéssel, magyarázattal és „Nem érted? → lecke” linkkel |
-| `#/zh` | ZH-szimuláció: 30 kérdés, időre, visszajelzés nélkül, a végén jegy (50/63/75/87%) |
+| `#/zh` | ZH-szimuláció az éles formátumban: 15 kérdés témakvóta szerint (`QUOTA`), 3 válasz (a jó + 2 véletlen rossz), 20 perc, visszajelzés nélkül, jegy az éles ponthatárral (`ZH_CUTS`: 8/10/12/14 pont) |
+| `#/kviz?mode=minta` | ⭐ Valódi ZH-minta: egy korábbi éles ZH 15 kérdése (`data/zhminta.js`, `JOG_ZHMINTA`, id `z1…z15`, `src: 'zh'`), azonnali magyarázattal. Az edző ezzel kezd. |
 | `#/kartya?t=` | villámkártyák (Szóköz = fordít, ← nem tudtam, → tudtam) |
 | `#/szamok` | az összes szám témánként + 🪜 évszám-létra (megbízatási idők, rigmussal) |
 | `#/most` | **Edző – „Mit csináljak most?”**: egyetlen javaslat (`coachPick`): ① ha sok esedékes ismétlés van → `#/kviz?mode=most`; ② különben az első még át nem vett lecke fókusz módban; ③ ha minden téma ≥85% → ZH; ④ különben a leggyengébb téma, váltakozva kvíz (10) / párbaj / igaz-hamis. Alatta: ZH-visszaszámlálás, napi sorozat, XP, mai adag, témasávok a leggyengébbtől. |
