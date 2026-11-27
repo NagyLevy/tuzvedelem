@@ -11,7 +11,7 @@ window.FIZ_LECKEK = (window.FIZ_LECKEK || []).concat([{
     { nev: 'Rugós rezgés körfrekvenciája', tex: 'ma = -Dx \\;\\Rightarrow\\; \\omega = \\sqrt{\\frac{D}{m}}', jel: '$D$ rugóállandó (N/m), $m$ tömeg.', mikor: 'A puskán csak $\\omega=\\sqrt{D/m}$ van. Az $ma=-Dx$ levezetést fejből tudd.', puska: true, bol: ['Sebesség és gyorsulás'] },
     { nev: 'Rezgés energiája', tex: 'E = \\frac12 mv^2 + \\frac12 Dx^2 = \\frac12 DA^2', jel: 'Mozgási + rugalmas energia. Összege állandó.', puska: true, bol: ['Rugós rezgés körfrekvenciája'] },
     { nev: 'Matematikai inga', tex: '\\omega = \\sqrt{\\frac{g}{l}},\\quad T_0 = 2\\pi\\sqrt{\\frac{l}{g}}', jel: '$l$ fonálhossz, $g$ nehézségi gyorsulás. Csak kis kitérésre ($\\sin\\varphi\\approx\\varphi$).', mikor: 'A tömegtől független. Alkalmas $g$ mérésére.', puska: true },
-    { nev: 'Kis rezgések egyensúly körül', tex: '\\omega = \\sqrt{-\\frac{1}{m}\\left(\\frac{dF}{dx}\\right)_{x=x_0}}', jel: '$x_0$ egyensúlyi hely: $F(x_0)=0$. Rezgés csak ott, ahol $F$ monoton csökken ($dF/dx<0$).', mikor: 'Ha $F(x)$ adott képlettel, és a rezgés idejét kérdezik.', puska: true, bol: ['Rugós rezgés körfrekvenciája'] },
+    { nev: 'Kis rezgések egyensúly körül', tex: '\\omega = \\sqrt{-\\frac{1}{m}\\left(\\frac{dF}{dx}\\right)_{x=x_0}}', jel: '$x_0$ egyensúlyi hely: $F(x_0)=0$. Rezgés csak ott, ahol $F$ monoton csökken ($dF/dx\\lt 0$).', mikor: 'Ha $F(x)$ adott képlettel, és a rezgés idejét kérdezik.', puska: true, bol: ['Rugós rezgés körfrekvenciája'] },
     { nev: 'Csillapított rezgés', tex: 'x(t) = A_0e^{-\\beta t}\\sin(\\omega_{cs}t+\\varphi_0),\\quad \\omega_{cs}=\\sqrt{\\omega_0^2-\\beta^2}', jel: '$\\beta = \\frac{C}{2m}$ csillapítási tényező, $C$ a közegellenállás együtthatója, $\\omega_0$ a csillapítatlan körfrekvencia.', mikor: 'Amplitúdó: $A(t)=A_0e^{-\\beta t}$.', puska: true },
     { nev: 'Gerjesztett rezgés amplitúdója', tex: 'A_g = \\frac{a_0}{\\sqrt{(\\omega_0^2-\\omega_g^2)^2 + 4\\beta^2\\omega_g^2}}', jel: '$a_0=F_0/m$, $\\omega_g$ a gerjesztő körfrekvencia.', mikor: 'Rezonancia: $\\omega_g\\approx\\omega_0$ közelében nagy az $A_g$.', puska: true, bol: ['Csillapított rezgés'] },
     { nev: 'Egyirányú, azonos frekvenciájú rezgések eredője', tex: 'A = \\sqrt{A_1^2 + A_2^2 + 2A_1A_2\\cos(\\varphi_1-\\varphi_2)},\\quad \\operatorname{tg}\\varphi = \\frac{A_1\\sin\\varphi_1 + A_2\\sin\\varphi_2}{A_1\\cos\\varphi_1 + A_2\\cos\\varphi_2}', jel: 'Azonos fázis: $A=A_1+A_2$. Ellentétes ($\\varphi_1=\\varphi_2+\\pi$): $A=|A_1-A_2|$.', puska: true },
@@ -31,7 +31,7 @@ window.FIZ_LECKEK = (window.FIZ_LECKEK || []).concat([{
     'A rugóállandó jele a diákon és a puskán $D$, nem $k$. A $k$ a hullámtanban hullámszám.',
     '$\\omega$ (rad/s) és $f$ (Hz) nem ugyanaz: $\\omega=2\\pi f$. A diás feladatban a „95 Hz körfrekvencia” valójában $\\omega$.',
     'Az inga képlete csak kis kitérésre igaz. A periódus nem függ a tömegtől.',
-    'Kis rezgésnél csak ott lehet rezgés, ahol $dF/dx<0$. A diás példában $x=2$ nem jó, csak $x=-2$.',
+    'Kis rezgésnél csak ott lehet rezgés, ahol $dF/dx\\lt 0$. A diás példában $x=2$ nem jó, csak $x=-2$.',
     'Lebegési frekvencia a különbség: $\\nu_1-\\nu_2$, nem a fele.'
   ],
   hianyzik: [],

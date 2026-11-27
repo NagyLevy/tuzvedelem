@@ -21,7 +21,7 @@ window.FIZ_LECKEK = (window.FIZ_LECKEK || []).concat([{
     { k: 'Megmaradás', cim: 'Szétlökött kocsik', html: '<ul><li>Előtte minden áll: összlendület 0.</li><li>Utána is 0: $m_1v_1+m_2v_2=0$, tehát ellentétes irányba mennek.</li><li>A könnyebb gyorsabb. Diás példa: 0,2 és 0,3 kg, $v_1=0{,}072$, $v_2=0{,}048$ m/s.</li></ul>' },
     { k: 'Tétel', cim: 'Tömegközéppont', html: '<ul><li>Úgy mozog, mintha a teljes tömeg benne lenne, és minden külső erő rá hatna.</li><li>A belső erők nem befolyásolják.</li><li>A dia példája: a tűzijáték szétrobban, de a darabok tömegközéppontja tovább repül a pályán.</li></ul>' },
     { k: 'Ütközés', cim: 'Rugalmas vagy rugalmatlan?', html: '<ul><li>Lendület mindig megmarad.</li><li>Tökéletesen rugalmas: a mozgási energia is megmarad.</li><li>Tökéletesen rugalmatlan: együtt mennek tovább, energia vész el. Diás példa: azonos tömegeknél a fele.</li></ul>' },
-    { k: 'Kötött rendszer', cim: 'Fonállal kötött testek', html: '<ul><li>Minden testre külön Newton II., a fonálerő $F\'$ belső erő.</li><li>Nyújthatatlan fonál: azonos gyorsulás.</li><li>Ha a kocsit rögzítjük, $a=0$ és $F\'=m_1g$. Ha szabadon mozog, $F\'<m_1g$.</li></ul>' }
+    { k: 'Kötött rendszer', cim: 'Fonállal kötött testek', html: '<ul><li>Minden testre külön Newton II., a fonálerő $F\'$ belső erő.</li><li>Nyújthatatlan fonál: azonos gyorsulás.</li><li>Ha a kocsit rögzítjük, $a=0$ és $F\'=m_1g$. Ha szabadon mozog, $F\'\\lt m_1g$.</li></ul>' }
   ],
   csapdak: [
     'Ütközési képletekben a sebesség előjeles. Szemben mozgó golyóknál az egyik negatív (diás példa: $-6$ m/s).',
