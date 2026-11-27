@@ -1,0 +1,1 @@
+window.FIZ_VIDEOK = {};
