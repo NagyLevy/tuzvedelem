@@ -18,6 +18,12 @@ A jogteszt.pdf mind a 215 kérdése benne van, plusz 159 kérdés a kurzus önel
 
 **▶ Itt:** https://nagylevy.github.io/tuzvedelem/Jog/ · továbbfejlesztéshez: [`Jog/Claude-nak.md`](Jog/Claude-nak.md)
 
+## 🔭 Klasszikus fizika (új, a `fizika/` mappában)
+Elméleti ZH-felkészítő a *Klasszikus fizika* tárgyhoz: 10 fejezet röviden, minden képletnél jelölve, hogy rajta van-e a segédleten (puskán).
+22 interaktív, csúszkás ábra, 12 animált magyarázó videó, Puska-dekóder (a segédlet összes jele lefordítva), Képletlap, Térkép.
+
+**▶ Itt:** https://nagylevy.github.io/tuzvedelem/fizika/ · továbbfejlesztéshez: [`fizika/Claude-nak.md`](fizika/Claude-nak.md)
+
 ## Futtatás helyben
 Nincs build, nincs telepítés: töltsd le, és nyisd meg az `index.html`-t a böngészőben.
 A haladás a böngésző helyi tárolójában (localStorage) marad.
