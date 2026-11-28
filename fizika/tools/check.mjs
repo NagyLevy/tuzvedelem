@@ -85,5 +85,69 @@ Object.entries(VIDEOK).forEach(([k, v]) => {
 });
 Object.entries(ABRAK).forEach(([k, a]) => { if (!a.cim || typeof a.mount !== 'function') hibak.push(`ábra ${k}: cim/mount kell`); });
 
+// Roadmap: állomások, elméleti kérdések, levezetett és gyakorló feladatok
+readdirSync(path.join(root, 'data/roadmap')).filter((f) => f.endsWith('.js')).sort().forEach((f) => load('data/roadmap/' + f));
+const ROAD = W.FIZ_ROADMAP || [];
+let elmDb = 0, felDb = 0, gyDb = 0;
+// HTML-be kerülő szöveg: a $…$ közti „<betű” címkének látszana a böngészőben
+const html = (s, hol) => {
+  if (s === undefined) return;
+  if (typeof s !== 'string') { hibak.push(`${hol}: szöveg kell`); return; }
+  inline(s, hol);
+  (s.match(/\$\$[\s\S]+?\$\$|\$[^$]+?\$/g) || []).forEach((m) => { if (/<[a-zA-Z/!]/.test(m)) hibak.push(`${hol}: „<” a képletben, írd \\lt-vel: ${m}`); });
+};
+const rIds = new Set();
+ROAD.forEach((s) => {
+  const h = `roadmap ${s.id}`;
+  if (rIds.has(s.id)) hibak.push(`${h}: ismétlődő állomás-azonosító`);
+  rIds.add(s.id);
+  for (const k of ['nev', 'leckek', 'perc', 'lenyeg', 'elmelet', 'receptek', 'tippek', 'feladatok', 'gyakorlo']) {
+    if (s[k] === undefined) hibak.push(`${h}: hiányzó mező: ${k}`);
+  }
+  (s.leckek || []).forEach((l) => { if (!TEMAK.some((t) => t.id === l)) hibak.push(`${h}: nincs ilyen lecke: ${l}`); });
+  html(s.lenyeg, h + ' lenyeg');
+  (s.elmelet || []).forEach((e, i) => {
+    const he = `${h} elmélet #${i + 1}`;
+    elmDb++;
+    if (!e.k || !e.v) hibak.push(`${he}: k/v kell`);
+    html(e.k, he); html(e.v, he); html(e.trukk, he);
+  });
+  (s.receptek || []).forEach((r, i) => {
+    const hr = `${h} recept #${i + 1}`;
+    if (!r.cim || !Array.isArray(r.lepesek) || !r.lepesek.length) hibak.push(`${hr}: cim/lepesek kell`);
+    html(r.cim, hr); html(r.mikor, hr);
+    (r.lepesek || []).forEach((x) => html(x, hr));
+    if (r.tex) tex(r.tex, hr);
+  });
+  (s.tippek || []).forEach((t, i) => html(t, `${h} tipp #${i + 1}`));
+  const fIds = new Set();
+  (s.feladatok || []).forEach((f) => {
+    const hf = `${h} feladat ${f.id}`;
+    felDb++;
+    if (!f.id || fIds.has(f.id)) hibak.push(`${hf}: hiányzó vagy ismétlődő id`);
+    fIds.add(f.id);
+    if (!f.cim || !f.szoveg || !f.valasz || !Array.isArray(f.lepesek) || !f.lepesek.length) hibak.push(`${hf}: cim/szoveg/lepesek/valasz kell`);
+    html(f.cim, hf); html(f.szoveg, hf); html(f.tipp, hf); html(f.megj, hf);
+    (f.adatok || []).forEach((a) => tex(a, hf + ' adat'));
+    (f.lepesek || []).forEach((l, i) => {
+      const hl = `${hf} lépés #${i + 1}`;
+      if (!l.cim) hibak.push(`${hl}: cim kell`);
+      html(l.cim, hl); html(l.szoveg, hl); html(l.megj, hl);
+      for (const k of ['tex', 'be', 'er']) if (l[k]) tex(l[k], `${hl} ${k}`);
+    });
+    if (f.valasz) tex(f.valasz, hf + ' valasz');
+  });
+  const gIds = new Set();
+  (s.gyakorlo || []).forEach((g) => {
+    const hg = `${h} gyakorló ${g.id}`;
+    gyDb++;
+    if (!g.id || gIds.has(g.id)) hibak.push(`${hg}: hiányzó vagy ismétlődő id`);
+    gIds.add(g.id);
+    if (!g.szoveg || !g.valasz) hibak.push(`${hg}: szoveg/valasz kell`);
+    html(g.szoveg, hg); html(g.tipp, hg);
+    if (g.valasz) tex(g.valasz, hg + ' valasz');
+  });
+});
+
 if (hibak.length) { console.log(hibak.join('\n')); console.log(`HIBA: ${hibak.length}`); process.exit(1); }
-console.log(`OK: ${LECKEK.length} lecke, ${kepletDb} képlet, ${PUSKA.length} puska-képlet, ${Object.keys(ABRAK).length} ábra, ${Object.keys(VIDEOK).length} videó`);
+console.log(`OK: ${LECKEK.length} lecke, ${kepletDb} képlet, ${PUSKA.length} puska-képlet, ${Object.keys(ABRAK).length} ábra, ${Object.keys(VIDEOK).length} videó · roadmap: ${ROAD.length} állomás, ${elmDb} elméleti kérdés, ${felDb} levezetés, ${gyDb} gyakorló`);

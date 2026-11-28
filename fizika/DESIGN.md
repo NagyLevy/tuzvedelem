@@ -26,6 +26,11 @@ Forrás: a Claude Design vászon (Main, Lecke, Videó, Puska artboardok). A toke
 - `.video`: canvas jelenetlejátszó felirattal, jelenetchipekkel, hu-HU felolvasással.
 - `.story`: Fókusz mód, teljes képernyő, sávok fent, lépésenkénti felfedés.
 - `.tema`: főoldali fejezetkártya, haladásgyűrűvel.
+- `.rq`: lenyíló elméleti kérdés (Roadmap): sorszám, kérdés, tanári mintaválasz, trükk, „Tudtam / Még nem megy”.
+- `.rc`: megoldási recept számozott lépésekkel és a kulcsképlettel.
+- `.fel`: feladatkártya: adat-chipek, lenyíló tipp (`.dd.tp`), lenyíló levezetés (`.dd.mo`), zöld végeredmény (`.valasz`).
+- `.steps`: levezetés idővonala: számozott pötty, cím, magyarázat, képlet (`.sf`), behelyettesítés (`.sf.be`, szaggatott keret), részeredmény (`.ser`, zöld), megjegyzés (`.smj`).
+- `.rm-day`, `.arany`: a Roadmap napi beosztása és az aranyszabályok.
 
 ## Elrendezés
 - `.wrap` max 1180px, 24px oldalmargó (mobilon 16px). Rács: `.grid` + `--min` oszlopszélesség.
